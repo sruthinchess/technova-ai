@@ -123,6 +123,7 @@ async function handleChat(req, res, user, body) {
   const text = String(body.message || "").trim().slice(0, 8000);
   const modelLabel = String(body.model || "Technova 1.0 Flash");
   const deepThink = Boolean(body.deepThink);
+  const tools = body.agent === undefined ? true : Boolean(body.agent);
   const wantsSearch = Boolean(body.search);
   if (!text) return json(res, 400, { error: "message is required" });
   if (rateLimited(`chat:${user.id}`, 40, 60_000)) {
@@ -216,6 +217,7 @@ async function handleChat(req, res, user, body) {
       systemPrompt: conversation.systemPrompt || null,
       deepThink,
       search,
+      tools,
       modelLabel,
       signal: controller.signal,
       onStep: (step) => send("step", { text: step }),

@@ -13,6 +13,7 @@ const state = {
   attachments: [],
   search: localStorage.getItem("technova.search") === "1",
   deep: localStorage.getItem("technova.deep") === "1",
+  agent: localStorage.getItem("technova.agent") !== "0",
   sources: [],
   editing: null,
   messages: [],
@@ -518,7 +519,7 @@ async function send(text, options = {}) {
     url: "/api/chat",
     payload: {
       message, conversationId: state.activeId, model: state.model, attachments,
-      search: state.search, deepThink: state.deep,
+      search: state.search, deepThink: state.deep, agent: state.agent,
     },
     echoUser: message,
     attachments,
@@ -940,7 +941,14 @@ $("exportChat").addEventListener("click", () => {
 function paintToggles() {
   $("searchToggle").setAttribute("aria-pressed", String(state.search));
   $("deepToggle").setAttribute("aria-pressed", String(state.deep));
+  $("agentToggle").setAttribute("aria-pressed", String(state.agent));
 }
+$("agentToggle").addEventListener("click", () => {
+  state.agent = !state.agent;
+  localStorage.setItem("technova.agent", state.agent ? "1" : "0");
+  paintToggles();
+  toast(state.agent ? "Agent mode on — it can search, browse and calculate" : "Agent mode off");
+});
 $("searchToggle").addEventListener("click", () => {
   state.search = !state.search;
   localStorage.setItem("technova.search", state.search ? "1" : "0");

@@ -64,6 +64,24 @@ Then open the app: the model menu now lists **every model your key can see**, fe
 from `GET /api/models` (which proxies the upstream `/v1/models` catalogue and caches it for ten
 minutes). Without a key, or if the upstream is unreachable, it falls back to the two built-in models.
 
+## Agent mode
+
+With a key set, the model runs as an agent: it decides which tools to call, the server runs them,
+feeds the results back, and loops up to four times before answering. Every call shows up in the
+thinking panel, so you can watch it work rather than guess.
+
+| Tool | What it does |
+| --- | --- |
+| `web_search` | searches the web (needs `TAVILY_API_KEY` or `SEARCH_URL`) |
+| `open_browser` | opens the URL in a **real headless Chromium**, returns the rendered text, title and links |
+| `fetch_page` | raw HTML → readable text, no browser needed |
+| `calculate` | exact arithmetic |
+| `current_time` | date and time in IST |
+
+The browser tool needs `npm i playwright-core` plus a Chromium binary — set `BROWSER_PATH` if it
+isn't at `/usr/local/bin/chromium`. Without it the tool reports that it is unavailable and the
+agent carries on with the others. Turn the whole thing off with the robot toggle in the composer.
+
 ## Tools
 
 | Tool | Needs | Notes |
