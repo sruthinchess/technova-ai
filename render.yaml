@@ -1,0 +1,23 @@
+# One-click deploy on Render (https://render.com).
+# The app needs a writable disk for its JSON store, which is what the disk block is for.
+services:
+  - type: web
+    name: technova-ai
+    runtime: node
+    plan: starter
+    buildCommand: ""
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_PATH
+        value: /var/data/db.json
+      - key: SECURE_COOKIES
+        value: "1"
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+    disk:
+      name: technova-data
+      mountPath: /var/data
+      sizeGB: 1
