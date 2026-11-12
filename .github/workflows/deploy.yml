@@ -1,0 +1,25 @@
+name: deploy
+
+# Runs on every push to main. Does nothing until RENDER_DEPLOY_HOOK is set:
+#   Render -> your service -> Settings -> Deploy Hook, then paste it into
+#   this repo's Settings -> Secrets and variables -> Actions as RENDER_DEPLOY_HOOK.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the host
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK is not set — skipping. Add it to enable deploys on push."
+            exit 0
+          fi
+          curl -fsSL -X POST "$HOOK"
+          echo "Deploy triggered."
