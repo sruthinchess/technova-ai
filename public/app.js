@@ -720,9 +720,17 @@ $("menuAttach").addEventListener("click", () => { closePlusMenu(); $("attachInpu
 $("menuSettings").addEventListener("click", () => { closePlusMenu(); openSettings(); });
 
 /* ---------------- API settings (server side) ---------------- */
+function paintConnectBanner(s) {
+  const banner = $("connectBanner");
+  if (!banner) return;
+  const dismissed = localStorage.getItem("technova.connectDismissed") === "1";
+  banner.hidden = Boolean(s && s.hasKey) || dismissed;
+}
+
 async function refreshSettings() {
   try {
     const s = await api("/api/settings");
+    paintConnectBanner(s);
     $("settingsStatus").innerHTML = s.hasKey
       ? `Live model connected <b>(${escapeHtml(s.keyHint)})</b>${s.keyFromEnv ? " from the server environment" : ""}. ` +
         `Search: <b>${escapeHtml(s.search)}</b>.`
@@ -751,6 +759,7 @@ async function saveSettings(patch) {
     $("keyInput").value = "";
     $("tavilyInput").value = "";
     await refreshSettings();
+    paintConnectBanner(s);
     toast(s.hasKey ? "Model key saved — the AI is live" : "Saved");
     return s;
   } catch (err) { toast(err.message); return null; }
@@ -775,6 +784,11 @@ $("keyClear").addEventListener("click", async () => {
   } catch (err) { toast(err.message); }
 });
 $("settingsClose").addEventListener("click", () => { $("settingsModal").hidden = true; });
+$("connectBtn").addEventListener("click", () => openSettings());
+$("connectClose").addEventListener("click", () => {
+  localStorage.setItem("technova.connectDismissed", "1");
+  $("connectBanner").hidden = true;
+});
 $("settingsModal").addEventListener("click", (e) => { if (e.target.id === "settingsModal") $("settingsModal").hidden = true; });
 $("attachInput").addEventListener("change", async (event) => {
   for (const file of [...event.target.files].slice(0, 5)) {

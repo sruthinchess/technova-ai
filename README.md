@@ -67,7 +67,8 @@ To reopen public sign-up, set `ALLOW_SIGNUP=1`.
 
 ## Adding your model key
 
-**From the app** (easiest): the `+` menu → *API key & search* → paste the key → Save. It is stored
+**From the app** (easiest): when no key is configured the chat shows a *Connect model* banner —
+click it, paste the key, Save. It is live immediately, no restart. Same panel under `+` → *API key & search*. It is stored
 on the server, never in the browser, and comes back masked. The `+` menu also holds web search,
 agent mode, deep think and file attachments.
 

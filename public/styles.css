@@ -488,3 +488,19 @@ textarea:focus-visible,input:focus-visible{outline:none}
 .act--attach.armed .dot{display:block}
 .apilabel{display:block;font-size:11.5px;color:var(--text-faint);margin:14px 0 6px;font-weight:500}
 .fieldrow{display:flex;gap:8px;align-items:center}
+
+/* connect banner */
+.connect{
+  display:flex;align-items:center;gap:14px;max-width:var(--max);margin:12px auto 0;
+  padding:12px 14px;border:1px solid var(--brand-ring);background:var(--brand-soft);
+  border-radius:var(--r);animation:rise .3s var(--ease) both;
+}
+.connect__txt{flex:1;min-width:0}
+.connect__txt b{display:block;font-size:13.5px;font-weight:650}
+.connect__txt span{display:block;font-size:12.5px;color:var(--text-dim);margin-top:2px}
+.connect__btn{width:auto;padding:8px 14px;font-size:13px;flex:0 0 auto}
+.connect .icon-btn{flex:0 0 auto}
+@media (max-width:720px){
+  .connect{flex-wrap:wrap;gap:8px}
+  .connect__btn{width:100%;order:3}
+}
