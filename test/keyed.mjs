@@ -3,6 +3,9 @@ import { rmSync } from "node:fs";
 
 process.env.DB_PATH = "./data/keyed-test.json";
 process.env.NVIDIA_API_KEY = "nvapi-not-a-real-key-for-tests";
+// point the upstream at a closed port: the fallback must be deterministic whether or not
+// this machine has internet (CI does, and a real catalogue would otherwise be fetched)
+process.env.MODEL_ENDPOINT = "http://127.0.0.1:9/v1/chat/completions";
 rmSync(process.env.DB_PATH, { force: true });
 
 const { start, stop } = await import("../server.js");
