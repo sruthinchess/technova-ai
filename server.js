@@ -249,7 +249,18 @@ async function handleChat(req, res, user, body) {
 }
 
 /* ---------------- router ---------------- */
-const server = createServer(async (req, res) => {
+export async function handle(req, res) {
+  await init();
+  return route(req, res);
+}
+
+let initialised = false;
+export function init() {
+  if (!initialised) { load(); initialised = true; }
+  return Promise.resolve();
+}
+
+async function route(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const path = url.pathname;
   const method = req.method || "GET";
@@ -505,11 +516,13 @@ const server = createServer(async (req, res) => {
     if (!res.headersSent) json(res, 500, { error: err.message || "server error" });
     else res.end();
   }
-});
+}
+
+const server = createServer(handle);
 
 /* ---------------- start ---------------- */
 export function start(port = PORT) {
-  load();
+  init();
   return new Promise((resolve) => {
     server.listen(port, () => {
       const actual = server.address().port;

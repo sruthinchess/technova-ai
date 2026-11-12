@@ -136,8 +136,29 @@ event: done   data: {"conversationId":"…","source":"Calculator"}
 
 ## Deploying
 
-This app needs a **writable disk** and a **long-lived process**, so run it on a normal Node host —
-Railway, Render, Fly.io, a VPS, or Docker — rather than a static/serverless platform.
+### Vercel
+
+Included and working: `api/index.js` hands each request to the same router, `vercel.json`
+routes everything to it and bundles `public/`, and the store falls back to the only writable
+path on a serverless runtime.
+
+```bash
+npm i -g vercel
+vercel --prod          # or connect the repo in the dashboard
+```
+
+Then set `NVIDIA_API_KEY` (and optionally `TAVILY_API_KEY`) under Settings → Environment Variables.
+
+**The catch, stated plainly:** a Vercel function has no persistent disk. The JSON store lands in
+the platform's temp directory, which is wiped on every cold start, so accounts and chats vanish
+between invocations and users get signed out at random. It works for a demo of the UI; for real
+accounts run it on a host with a disk, or swap `lib/store.js` for Postgres. That is why
+`render.yaml` is included.
+
+### Anywhere with a disk
+
+This app wants a **writable disk** and a **long-lived process** — Railway, Render, Fly.io, a VPS,
+or Docker.
 
 ```bash
 docker build -t technova-ai .
