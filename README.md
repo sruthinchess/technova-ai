@@ -53,6 +53,13 @@ npm test           # 32 end-to-end checks against a real server
 
 ## Adding your model key
 
+**From the app** (easiest): the `+` menu → *API key & search* → paste the key → Save. It is stored
+on the server, never in the browser, and comes back masked. The `+` menu also holds web search,
+agent mode, deep think and file attachments.
+
+**From the environment** (recommended on a host): an `NVIDIA_API_KEY` variable always wins over
+anything pasted in the UI.
+
 The key stays on the server. Never put it in a file you share or commit.
 
 ```bash

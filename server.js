@@ -15,6 +15,7 @@ import {
 } from "./lib/auth.js";
 import { streamAnswer, hasKey, upstreamModel, listModels } from "./lib/provider.js";
 import { searchWeb, searchProvider, fetchPage } from "./lib/tools.js";
+import * as settings from "./lib/settings.js";
 
 loadEnv(); // read .env before any module reads process.env
 
@@ -402,6 +403,26 @@ async function route(req, res) {
           save();
           return json(res, 200, { ok: true });
         }
+      }
+
+      if (path === "/api/settings" && method === "GET") {
+        return json(res, 200, settings.summary());
+      }
+
+      if (path === "/api/settings" && method === "PUT") {
+        const patch = await readBody(req);
+        // never echo a key back, only whether it landed
+        settings.set({
+          nvidiaApiKey: patch.nvidiaApiKey,
+          tavilyApiKey: patch.tavilyApiKey,
+          searchUrl: patch.searchUrl,
+        });
+        return json(res, 200, settings.summary());
+      }
+
+      if (path === "/api/settings" && method === "DELETE") {
+        settings.set({ nvidiaApiKey: "", tavilyApiKey: "", searchUrl: "" });
+        return json(res, 200, settings.summary());
       }
 
       if (path === "/api/tools/page" && method === "POST") {

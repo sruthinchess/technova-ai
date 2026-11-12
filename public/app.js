@@ -723,7 +723,78 @@ function renderAttachments() {
   });
 }
 
-$("attachBtn").addEventListener("click", () => $("attachInput").click());
+function closePlusMenu() {
+  $("plusMenu").hidden = true;
+  $("attachBtn").setAttribute("aria-expanded", "false");
+}
+$("attachBtn").addEventListener("click", (event) => {
+  event.stopPropagation();
+  const open = $("plusMenu").hidden;
+  $("plusMenu").hidden = !open;
+  $("attachBtn").setAttribute("aria-expanded", String(open));
+});
+$("plusMenu").addEventListener("click", (event) => event.stopPropagation());
+document.addEventListener("click", () => closePlusMenu());
+$("menuAttach").addEventListener("click", () => { closePlusMenu(); $("attachInput").click(); });
+$("menuSettings").addEventListener("click", () => { closePlusMenu(); openSettings(); });
+
+/* ---------------- API settings (server side) ---------------- */
+async function refreshSettings() {
+  try {
+    const s = await api("/api/settings");
+    $("settingsStatus").innerHTML = s.hasKey
+      ? `Live model connected <b>(${escapeHtml(s.keyHint)})</b>${s.keyFromEnv ? " from the server environment" : ""}. ` +
+        `Search: <b>${escapeHtml(s.search)}</b>.`
+      : "No model key yet — answers come from the built-in skills. Paste a key below to turn the model on.";
+    $("keyInput").placeholder = s.hasKey ? `${s.keyHint} — type to replace` : "nvapi-…";
+    $("tavilyInput").placeholder = s.searchHint || "tvly-…";
+    $("searxInput").value = s.searchFromEnv ? "" : (s.searchUrl || "");
+    const armed = state.search || state.agent || state.deep;
+    $("attachBtn").classList.toggle("armed", armed);
+    return s;
+  } catch (err) {
+    $("settingsStatus").textContent = err.message;
+    return null;
+  }
+}
+
+function openSettings() {
+  $("settingsModal").hidden = false;
+  refreshSettings();
+  $("keyInput").focus();
+}
+
+async function saveSettings(patch) {
+  try {
+    const s = await api("/api/settings", { method: "PUT", body: patch });
+    $("keyInput").value = "";
+    $("tavilyInput").value = "";
+    await refreshSettings();
+    toast(s.hasKey ? "Model key saved — the AI is live" : "Saved");
+    return s;
+  } catch (err) { toast(err.message); return null; }
+}
+
+$("keySave").addEventListener("click", () => {
+  const value = $("keyInput").value.trim();
+  if (!value) { toast("Paste a key first"); return; }
+  saveSettings({ nvidiaApiKey: value });
+});
+$("tavilySave").addEventListener("click", () => {
+  const value = $("tavilyInput").value.trim();
+  if (!value) { toast("Paste a search key first"); return; }
+  saveSettings({ tavilyApiKey: value });
+});
+$("searxSave").addEventListener("click", () => saveSettings({ searchUrl: $("searxInput").value.trim() }));
+$("keyClear").addEventListener("click", async () => {
+  try {
+    await api("/api/settings", { method: "DELETE" });
+    await refreshSettings();
+    toast("Keys removed");
+  } catch (err) { toast(err.message); }
+});
+$("settingsClose").addEventListener("click", () => { $("settingsModal").hidden = true; });
+$("settingsModal").addEventListener("click", (e) => { if (e.target.id === "settingsModal") $("settingsModal").hidden = true; });
 $("attachInput").addEventListener("change", async (event) => {
   for (const file of [...event.target.files].slice(0, 5)) {
     if (file.size > 200_000) { toast(`${file.name} is too big (200 KB limit)`); continue; }
@@ -942,6 +1013,8 @@ function paintToggles() {
   $("searchToggle").setAttribute("aria-pressed", String(state.search));
   $("deepToggle").setAttribute("aria-pressed", String(state.deep));
   $("agentToggle").setAttribute("aria-pressed", String(state.agent));
+  const btn = $("attachBtn");
+  if (btn) btn.classList.toggle("armed", state.search || state.agent || state.deep);
 }
 $("agentToggle").addEventListener("click", () => {
   state.agent = !state.agent;
@@ -1283,6 +1356,8 @@ document.addEventListener("keydown", (event) => {
     $("usageModal").hidden = true;
     $("helpModal").hidden = true;
     $("shareModal").hidden = true;
+    $("settingsModal").hidden = true;
+    closePlusMenu();
   }
 });
 
@@ -1294,6 +1369,7 @@ async function enterApp() {
   $("userEmail").textContent = state.user.email;
   $("userAvatar").textContent = (state.user.name || "U").slice(0, 1).toUpperCase();
   await loadModels();
+  await refreshSettings();
   await loadConversations();
   const latest = state.conversations[0];
   await openConversation(latest ? latest.id : null);

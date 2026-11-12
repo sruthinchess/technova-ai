@@ -128,20 +128,42 @@
       <div class="composer__in">
         <div class="attachbar" id="attachBar" hidden></div>
         <div class="box">
-          <button class="act act--attach" id="attachBtn" title="Attach a text file" aria-label="Attach a text file">
-            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-14.6 6L4 15a8.5 8.5 0 0 1 12-12l2.5 2.5"/><path d="M16 7l-7 7a2.5 2.5 0 0 0 3.5 3.5l7-7"/></svg>
-          </button>
+          <div class="pluswrap">
+            <button class="act act--attach" id="attachBtn" title="Tools and attachments" aria-label="Tools and attachments" aria-expanded="false">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <div class="plusmenu" id="plusMenu" hidden>
+              <button class="menurow" id="searchToggle" aria-pressed="false">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                <span>Search the web<small>Look it up before answering</small></span>
+                <i class="tick"></i>
+              </button>
+              <button class="menurow" id="agentToggle" aria-pressed="true">
+                <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M9 12h.01M15 12h.01M12 3v4M8 19l-1 2M16 19l1 2"/></svg>
+                <span>Agent mode<small>Let it search, browse and calculate</small></span>
+                <i class="tick"></i>
+              </button>
+              <button class="menurow" id="deepToggle" aria-pressed="false">
+                <svg viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-1 5.8A3 3 0 0 0 8 18h1"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 1 5.8A3 3 0 0 1 16 18h-1"/><path d="M12 4v16"/></svg>
+                <span>Deep think<small>Reason it through, slower</small></span>
+                <i class="tick"></i>
+              </button>
+              <div class="plusmenu__sep"></div>
+              <button class="menurow" id="menuAttach">
+                <svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-14.6 6L4 15a8.5 8.5 0 0 1 12-12l2.5 2.5"/><path d="M16 7l-7 7a2.5 2.5 0 0 0 3.5 3.5l7-7"/></svg>
+                <span>Attach a file<small>Text, Markdown, JSON, CSV</small></span>
+              </button>
+              <button class="menurow" id="menuSettings">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2 2M17.1 17.1l2 2M19.1 4.9l-2 2M6.9 17.1l-2 2"/></svg>
+                <span>API key &amp; search<small>Connect the live model</small></span>
+              </button>
+            </div>
+          </div>
           <input type="file" id="attachInput" accept=".txt,.md,.markdown,.json,.csv,.log,text/*" hidden multiple>
           <textarea id="input" rows="1" placeholder="Ask anything" aria-label="Message"></textarea>
-          <button class="act act--toggle" id="searchToggle" title="Search the web" aria-label="Search the web" aria-pressed="false">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          </button>
-          <button class="act act--toggle" id="agentToggle" title="Agent mode — lets the model search, open pages and calculate" aria-label="Agent mode" aria-pressed="true">
-            <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M9 12h.01M15 12h.01M12 3v4M8 19l-1 2M16 19l1 2"/></svg>
-          </button>
-          <button class="act act--toggle" id="deepToggle" title="Deep think" aria-label="Deep think" aria-pressed="false">
-            <svg viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-1 5.8A3 3 0 0 0 8 18h1"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 1 5.8A3 3 0 0 1 16 18h-1"/><path d="M12 4v16"/></svg>
-          </button>
+          
+          
+          
           <div class="wave" id="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
           <button class="act act--mic" id="mic" aria-label="Voice input" title="Voice input">
             <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
@@ -174,6 +196,37 @@
     </div>
     <div class="modal__actions">
       <button class="btn btn--ghost" id="shareRevoke">Stop sharing</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="settingsModal" hidden>
+  <div class="modal__card" role="dialog" aria-label="API settings">
+    <div class="modal__head"><h2>API key &amp; search</h2><button class="icon-btn" id="settingsClose" aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="modal__note" style="margin:0 0 14px" id="settingsStatus">Checking…</p>
+
+    <label class="apilabel" for="keyInput">Model API key</label>
+    <div class="fieldrow">
+      <input class="txtin" id="keyInput" type="password" autocomplete="off" placeholder="nvapi-…">
+      <button class="btn btn--primary" id="keySave" style="width:auto">Save</button>
+    </div>
+    <p class="modal__note" style="margin:4px 0 0">Stored on this server, never sent to the browser. An <code>NVIDIA_API_KEY</code> environment variable overrides it.</p>
+
+    <label class="apilabel" for="tavilyInput">Search key <span style="text-transform:none;letter-spacing:0">(Tavily, optional)</span></label>
+    <div class="fieldrow">
+      <input class="txtin" id="tavilyInput" type="password" autocomplete="off" placeholder="tvly-…">
+      <button class="btn btn--ghost" id="tavilySave">Save</button>
+    </div>
+
+    <label class="apilabel" for="searxInput">…or a SearxNG endpoint</label>
+    <div class="fieldrow">
+      <input class="txtin" id="searxInput" placeholder="https://searx.example/search">
+      <button class="btn btn--ghost" id="searxSave">Save</button>
+    </div>
+
+    <div class="modal__actions">
+      <button class="btn btn--ghost" id="keyClear">Remove keys</button>
     </div>
   </div>
 </div>

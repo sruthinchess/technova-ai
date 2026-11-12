@@ -109,7 +109,11 @@ console.log("\ntool registry");
 }
 
 console.log("\nbrowser tool");
-{
+let browserInstalled = true;
+try { await import("playwright-core"); } catch { browserInstalled = false; }
+if (!browserInstalled) {
+  console.log("  skip  playwright-core is not installed (optional dependency)");
+} else {
   const page = await runTool("open_browser", { url: `http://127.0.0.1:${fakePort}/page` });
   check("opens a page in a real browser", page.title === "Pricing", JSON.stringify(page).slice(0, 140));
   check("returns rendered text", (page.text || "").includes("Three fifty"), String(page.text).slice(0, 60));
