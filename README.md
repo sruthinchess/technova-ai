@@ -51,7 +51,17 @@ npm test           # 32 end-to-end checks against a real server
 - **Light/dark theme**, four accents, mobile layout
 - **Shortcuts**: `Ctrl/Cmd+K` palette, `Ctrl/Cmd+Shift+O` new chat, `Esc` closes overlays
 
-## Accounts
+## No sign-in (by default)
+
+The app opens straight into the chat. There is no login screen, no session and no per-user data:
+every visitor shares one local account, its conversations and its settings.
+
+That is deliberate for a personal or self-hosted instance, and **it means anyone with the URL can
+read the chats, delete them and change the API key**. The server prints a warning about this at
+startup. Before putting it on a public domain, either put it behind a reverse proxy with basic auth,
+or set `ALLOW_SIGNUP=1` and re-enable the account routes in `server.js`.
+
+## Accounts (optional)
 
 There is **no public sign-up**. Accounts are created by the owner, two ways:
 

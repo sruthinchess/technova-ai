@@ -68,10 +68,14 @@ console.log("\nclearing");
   check("back to local mode", health.provider === "local", health.provider);
 }
 
-console.log("\nauth");
+console.log("\nopen app");
 {
+  // there is no sign-in: settings are reachable, which is why the server prints a
+  // warning at startup and ADMIN_TOKEN can lock them down
   const anon = await fetch(`${base}/api/settings`);
-  check("needs a session", anon.status === 401, String(anon.status));
+  check("settings are reachable without a session", anon.status === 200, String(anon.status));
+  const body = await anon.json();
+  check("still never returns a key", !JSON.stringify(body).includes("nvapi-"), JSON.stringify(body).slice(0, 60));
 }
 
 await stop();

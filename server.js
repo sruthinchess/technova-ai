@@ -49,7 +49,29 @@ function readBody(req) {
   });
 }
 
-const userFromRequest = (req) => userForToken(parseCookies(req.headers.cookie).sid);
+const LOCAL_USER = {
+  id: "local",
+  email: "local@technova",
+  name: "You",
+  password: "", // no password: this account is not reachable through /api/auth/login
+  createdAt: Date.now(),
+};
+
+export function ensureLocalUser() {
+  if (!data().users.some((u) => u.id === LOCAL_USER.id)) {
+    data().users.push({ ...LOCAL_USER });
+    save();
+  }
+  return data().users.find((u) => u.id === LOCAL_USER.id);
+}
+
+// The app is single-user: every request belongs to the local account. A real session
+// cookie still wins if one exists, so the old endpoints keep working.
+const userFromRequest = (req) => {
+  const sessionUser = userForToken(parseCookies(req.headers.cookie).sid);
+  if (sessionUser) return sessionUser;
+  return data().users.find((u) => u.id === LOCAL_USER.id) || ensureLocalUser();
+};
 
 /* ---------------- naive rate limit for auth ---------------- */
 const attempts = new Map();
@@ -316,10 +338,8 @@ async function route(req, res) {
     }
 
     if (path === "/api/auth/me" && method === "GET") {
-      // a null user is a normal answer here, not an error: it keeps the browser
-      // console clean for every visitor who has not signed in yet
-      const user = userFromRequest(req);
-      return json(res, 200, { user: user ? publicUser(user) : null });
+      // there is no sign-in any more: the local account is always the answer
+      return json(res, 200, { user: publicUser(userFromRequest(req)), auth: "off" });
     }
 
     if (path.startsWith("/api/shared/") && method === "GET") {
@@ -569,11 +589,12 @@ export function ensureFirstUser() {
 
 export function start(port = PORT) {
   init();
-  ensureFirstUser();
+  ensureLocalUser();
   return new Promise((resolve) => {
     server.listen(port, () => {
       const actual = server.address().port;
       console.log(`Technova AI listening on http://localhost:${actual}  (${hasKey() ? "live model" : "local skills"} mode)`);
+      console.log("[auth] sign-in is OFF — anyone who can reach this port can use the app and change settings.");
       resolve(actual);
     });
   });

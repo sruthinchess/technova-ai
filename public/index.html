@@ -6,37 +6,14 @@
 <title>Technova AI</title>
 <meta name="description" content="Technova AI — a full-stack chat app with accounts, saved conversations and streaming answers.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%230d0d0d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='white' font-family='system-ui'%3E%E2%88%9E%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0f9d8a">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 
-<!-- ---------------- auth ---------------- -->
-<div class="auth" id="auth" hidden>
-  <div class="auth__card">
-    <div class="auth__brand"><span class="mark">∞</span><span>Technova AI</span></div>
-    <h1 class="auth__title" id="authTitle">Welcome back</h1>
-    <p class="auth__sub" id="authSub">Sign in to pick up where you left off.</p>
-
-    <form id="authForm" autocomplete="on">
-      <label class="field">
-        <span>Email</span>
-        <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
-      </label>
-      <label class="field">
-        <span>Password</span>
-        <input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters" required minlength="8">
-      </label>
-      <button class="btn btn--primary auth__submit" type="submit" id="authSubmit">Sign in</button>
-      <p class="auth__error" id="authError" role="alert"></p>
-    </form>
-
-    <p class="auth__switch">Accounts are created by the owner — there is no public sign-up.</p>
-  </div>
-  <p class="auth__foot">Runs on your own server · conversations are stored in your account</p>
-</div>
-
 <!-- ---------------- app ---------------- -->
-<div class="app" id="app" hidden>
+<div class="app" id="app">
   <div class="scrim" id="scrim"></div>
 
   <aside class="side" id="side">
@@ -63,6 +40,7 @@
     </div>
 
     <div class="side__foot">
+      <div class="modelchip" id="modelChip" title="Model status"><i></i><span id="modelChipText">Local skills</span></div>
       <button class="userrow" id="userRow" aria-haspopup="menu">
         <span class="avatar" id="userAvatar">S</span>
         <div><b id="userName">You</b><span id="userEmail">—</span></div>
@@ -71,7 +49,6 @@
         <button id="usageBtn">Usage</button>
         <button id="exportAllBtn">Export all chats</button>
         <button id="clearAllBtn">Delete all chats</button>
-        <button id="logoutBtn">Sign out</button>
       </div>
     </div>
   </aside>
@@ -286,5 +263,10 @@
 
 <div class="toast" id="toast"></div>
 <script src="/app.js" type="module"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+  }
+</script>
 </body>
 </html>

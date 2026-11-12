@@ -104,7 +104,8 @@ console.log("\npage endpoint");
     method: "POST", headers: { "Content-Type": "application/json", Cookie: "" },
     body: JSON.stringify({ url: "https://example.com" }),
   });
-  check("needs a session", res.status === 401, String(res.status));
+  // no sign-in any more: a bad URL is a 400, not an auth failure
+  check("is reachable without a session", res.status !== 401, String(res.status));
 }
 
 await stop();

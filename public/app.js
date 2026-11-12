@@ -131,45 +131,6 @@ function setBusy(busy) {
   setStatus(busy ? "Generating…" : "Technova AI can make mistakes. Check important info.");
 }
 
-/* ---------------- auth ---------------- */
-function showAuth(message) {
-  $("app").hidden = true;
-  $("auth").hidden = false;
-  $("authError").textContent = message || "";
-}
-
-$("authForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const button = $("authSubmit");
-  button.disabled = true;
-  $("authError").textContent = "";
-  try {
-    const payload = {
-      email: $("authEmail").value.trim(),
-      password: $("authPassword").value,
-    };
-    const result = await api("/api/auth/login", { method: "POST", body: payload });
-    state.user = result.user;
-    $("authForm").reset();
-    await enterApp();
-  } catch (err) {
-    $("authError").textContent = err.message;
-  } finally {
-    button.disabled = false;
-  }
-});
-
-$("userRow").addEventListener("click", () => { $("userMenu").hidden = !$("userMenu").hidden; });
-$("logoutBtn").addEventListener("click", async () => {
-  await api("/api/auth/logout", { method: "POST" }).catch(() => {});
-  state.user = null;
-  state.conversations = [];
-  state.activeId = null;
-  state.messages = [];
-  $("userMenu").hidden = true;
-  showAuth("");
-});
-
 /* ---------------- conversations ---------------- */
 function renderChatList() {
   const query = $("chatSearch").value.trim().toLowerCase();
@@ -565,7 +526,7 @@ async function streamRequest({ url, payload, echoUser, attachments = [], dropLas
       signal: state.controller.signal,
     });
 
-    if (res.status === 401) { showAuth("Your session expired — sign in again."); setBusy(false); return; }
+    if (res.status === 401) { toast("The server rejected that request"); setBusy(false); return; }
     if (!res.ok) {
       const detail = await res.json().catch(() => ({}));
       throw new Error(detail.error || `HTTP ${res.status}`);
@@ -738,6 +699,11 @@ async function refreshSettings() {
     $("keyInput").placeholder = s.hasKey ? `${s.keyHint} — type to replace` : "nvapi-…";
     $("tavilyInput").placeholder = s.searchHint || "tvly-…";
     $("searxInput").value = s.searchFromEnv ? "" : (s.searchUrl || "");
+    const chip = $("modelChip");
+    if (chip) {
+      chip.classList.toggle("live", Boolean(s.hasKey));
+      $("modelChipText").textContent = s.hasKey ? "Live model" : "Local skills";
+    }
     const armed = state.search || state.agent || state.deep;
     $("attachBtn").classList.toggle("armed", armed);
     return s;
@@ -1165,7 +1131,6 @@ function paletteActions() {
     { label: "Keyboard shortcuts", run: () => { closePalette(); $("helpModal").hidden = false; } },
     { label: currentTheme() === "dark" ? "Switch to light theme" : "Switch to dark theme", run: () => $("themeBtn").click() },
     ...ACCENTS.map((a) => ({ label: `Accent: ${a}`, run: () => { setAccent(a); closePalette(); toast(`Accent: ${a}`); } })),
-    { label: "Sign out", run: () => $("logoutBtn").click() },
   ];
 }
 
@@ -1231,7 +1196,6 @@ palette.addEventListener("click", (e) => { if (e.target === palette) closePalett
 /* ---------------- read-only shared view ---------------- */
 async function renderShared(token) {
   document.body.classList.add("shared-view");
-  $("auth").hidden = true;
   $("app").hidden = false;
   $("side").hidden = true;
   document.querySelector(".topbar").innerHTML =
@@ -1358,7 +1322,6 @@ document.addEventListener("keydown", (event) => {
 
 /* ---------------- boot ---------------- */
 async function enterApp() {
-  $("auth").hidden = true;
   $("app").hidden = false;
   $("userName").textContent = state.user.name;
   $("userEmail").textContent = state.user.email;
@@ -1382,10 +1345,9 @@ async function enterApp() {
 
   try {
     const { user } = await api("/api/auth/me");
-    if (!user) throw new Error("no session");
     state.user = user;
-    await enterApp();
   } catch {
-    showAuth("");
+    state.user = { name: "You", email: "local" };
   }
+  await enterApp();
 })();
