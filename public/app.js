@@ -1129,7 +1129,12 @@ function openPalette() {
   renderPalette("");
   $("paletteInput").focus();
 }
-function closePalette() { palette.hidden = true; }
+function closePalette() {
+  palette.hidden = true;
+  // leaving focus inside the hidden input swallows the next keystroke (e.g. "?")
+  $("paletteInput").blur();
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+}
 
 $("helpClose").addEventListener("click", () => { $("helpModal").hidden = true; });
 $("helpModal").addEventListener("click", (e) => { if (e.target.id === "helpModal") $("helpModal").hidden = true; });
@@ -1153,7 +1158,6 @@ async function renderShared(token) {
   $("auth").hidden = true;
   $("app").hidden = false;
   $("side").hidden = true;
-  $("topbar")?.remove?.();
   document.querySelector(".topbar").innerHTML =
     `<div class="modelbtn" style="pointer-events:none"><span class="mmark">∞</span><span id="sharedTitle">Shared chat</span></div>
      <div class="topbar__right"><a class="icon-btn" href="/" title="Open Technova AI">Open app</a></div>`;
@@ -1299,6 +1303,7 @@ async function enterApp() {
 
   try {
     const { user } = await api("/api/auth/me");
+    if (!user) throw new Error("no session");
     state.user = user;
     await enterApp();
   } catch {

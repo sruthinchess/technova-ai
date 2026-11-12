@@ -80,6 +80,10 @@ let cookie = "";
   const me = await call("/api/auth/me", { cookie });
   check("session resolves to the user", me.json?.user?.email === "sruthin@example.com");
 
+  const anonMe = await call("/api/auth/me");
+  check("signed-out who-am-i is 200 with a null user", anonMe.res.status === 200 && anonMe.json?.user === null,
+    `${anonMe.res.status} ${anonMe.text.slice(0, 40)}`);
+
   const anon = await call("/api/conversations");
   check("blocks anonymous access", anon.res.status === 401);
 
@@ -294,7 +298,7 @@ console.log("\nlogout");
   const out = await call("/api/auth/logout", { method: "POST", cookie });
   check("logout succeeds", out.res.status === 200);
   const me = await call("/api/auth/me", { cookie });
-  check("session is dead after logout", me.res.status === 401);
+  check("session is dead after logout", me.res.status === 200 && me.json?.user === null);
 }
 
 await stop();

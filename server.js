@@ -296,9 +296,10 @@ const server = createServer(async (req, res) => {
     }
 
     if (path === "/api/auth/me" && method === "GET") {
+      // a null user is a normal answer here, not an error: it keeps the browser
+      // console clean for every visitor who has not signed in yet
       const user = userFromRequest(req);
-      if (!user) return json(res, 401, { error: "not signed in" });
-      return json(res, 200, { user: publicUser(user) });
+      return json(res, 200, { user: user ? publicUser(user) : null });
     }
 
     if (path.startsWith("/api/shared/") && method === "GET") {
