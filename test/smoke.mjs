@@ -2,6 +2,7 @@
 import { rmSync } from "node:fs";
 
 // must be set before the server module loads: it reads DB_PATH at import time
+process.env.ALLOW_SIGNUP = "1"; // tests create their own accounts
 process.env.DB_PATH = process.env.DB_PATH || "./data/test-db.json";
 rmSync(process.env.DB_PATH, { force: true });
 

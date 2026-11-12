@@ -1,6 +1,7 @@
 // Settings: the key can be pasted once and used, without touching a file.
 import { rmSync } from "node:fs";
 
+process.env.ALLOW_SIGNUP = "1"; // tests create their own accounts
 process.env.DB_PATH = "./data/settings-test.json";
 delete process.env.NVIDIA_API_KEY;
 delete process.env.TAVILY_API_KEY;

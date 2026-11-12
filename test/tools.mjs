@@ -2,6 +2,7 @@
 import { createServer } from "node:http";
 import { rmSync } from "node:fs";
 
+process.env.ALLOW_SIGNUP = "1"; // tests create their own accounts
 process.env.DB_PATH = "./data/tools-test.json";
 rmSync(process.env.DB_PATH, { force: true });
 

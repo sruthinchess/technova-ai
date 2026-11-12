@@ -1,6 +1,7 @@
 // With a key set but the upstream unreachable, the catalogue must degrade gracefully.
 import { rmSync } from "node:fs";
 
+process.env.ALLOW_SIGNUP = "1"; // tests create their own accounts
 process.env.DB_PATH = "./data/keyed-test.json";
 process.env.NVIDIA_API_KEY = "nvapi-not-a-real-key-for-tests";
 // point the upstream at a closed port: the fallback must be deterministic whether or not

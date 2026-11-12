@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 
 import { loadEnv } from "./lib/env.js";
-import { load, data, save, flush, id, now } from "./lib/store.js";
+import { load, data, save, flush, id, now, reloadIfChanged } from "./lib/store.js";
 import {
   createUser, findUserByEmail, verifyPassword, createSession, userForToken,
   destroySession, publicUser, parseCookies, sessionCookie, clearedCookie,
@@ -280,6 +280,11 @@ async function route(req, res) {
     }
 
     if (path === "/api/auth/signup" && method === "POST") {
+      // sign-up is closed by default: accounts come from ADMIN_EMAIL/ADMIN_PASSWORD or
+      // scripts/create-user.mjs. Set ALLOW_SIGNUP=1 to reopen it.
+      if (process.env.ALLOW_SIGNUP !== "1") {
+        return json(res, 403, { error: "sign-up is disabled — ask the owner for an account" });
+      }
       if (rateLimited(req.socket.remoteAddress)) return json(res, 429, { error: "too many attempts, wait a minute" });
       const { email, password, name } = await readBody(req);
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email || ""))) return json(res, 400, { error: "enter a valid email" });
@@ -292,6 +297,7 @@ async function route(req, res) {
     }
 
     if (path === "/api/auth/login" && method === "POST") {
+      reloadIfChanged(); // pick up accounts created from the CLI
       if (rateLimited(req.socket.remoteAddress)) return json(res, 429, { error: "too many attempts, wait a minute" });
       const { email, password } = await readBody(req);
       const user = findUserByEmail(email);
@@ -544,8 +550,26 @@ async function route(req, res) {
 const server = createServer(handle);
 
 /* ---------------- start ---------------- */
+export function ensureFirstUser() {
+  const users = data().users;
+  if (users.length) return null;
+  const email = (process.env.ADMIN_EMAIL || "").trim();
+  const password = process.env.ADMIN_PASSWORD || "";
+  if (!email || password.length < 8) {
+    console.log(
+      "[auth] no accounts yet. Create one with:  node scripts/create-user.mjs you@example.com your-password\n" +
+      "[auth] (or set ADMIN_EMAIL and ADMIN_PASSWORD and restart)",
+    );
+    return null;
+  }
+  const user = createUser(email, password, process.env.ADMIN_NAME || email.split("@")[0]);
+  console.log(`[auth] created the first account: ${user.email}`);
+  return user;
+}
+
 export function start(port = PORT) {
   init();
+  ensureFirstUser();
   return new Promise((resolve) => {
     server.listen(port, () => {
       const actual = server.address().port;

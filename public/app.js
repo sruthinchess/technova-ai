@@ -132,28 +132,11 @@ function setBusy(busy) {
 }
 
 /* ---------------- auth ---------------- */
-let authMode = "login";
-
 function showAuth(message) {
   $("app").hidden = true;
   $("auth").hidden = false;
   $("authError").textContent = message || "";
 }
-
-function setAuthMode(mode) {
-  authMode = mode;
-  const signup = mode === "signup";
-  $("authTitle").textContent = signup ? "Create your account" : "Welcome back";
-  $("authSub").textContent = signup ? "Your conversations are saved to this account." : "Sign in to pick up where you left off.";
-  $("nameField").hidden = !signup;
-  $("authSubmit").textContent = signup ? "Create account" : "Sign in";
-  $("authSwitchText").textContent = signup ? "Already have an account?" : "New here?";
-  $("authSwitch").textContent = signup ? "Sign in" : "Create an account";
-  $("authPassword").setAttribute("autocomplete", signup ? "new-password" : "current-password");
-  $("authError").textContent = "";
-}
-
-$("authSwitch").addEventListener("click", () => setAuthMode(authMode === "login" ? "signup" : "login"));
 
 $("authForm").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -165,8 +148,7 @@ $("authForm").addEventListener("submit", async (event) => {
       email: $("authEmail").value.trim(),
       password: $("authPassword").value,
     };
-    if (authMode === "signup") payload.name = $("authName").value.trim();
-    const result = await api(`/api/auth/${authMode}`, { method: "POST", body: payload });
+    const result = await api("/api/auth/login", { method: "POST", body: payload });
     state.user = result.user;
     $("authForm").reset();
     await enterApp();
@@ -186,7 +168,6 @@ $("logoutBtn").addEventListener("click", async () => {
   state.messages = [];
   $("userMenu").hidden = true;
   showAuth("");
-  setAuthMode("login");
 });
 
 /* ---------------- conversations ---------------- */
@@ -1391,7 +1372,6 @@ async function enterApp() {
     state.user = user;
     await enterApp();
   } catch {
-    setAuthMode("login");
     showAuth("");
   }
 })();

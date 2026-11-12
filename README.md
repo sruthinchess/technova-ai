@@ -51,6 +51,20 @@ npm test           # 32 end-to-end checks against a real server
 - **Light/dark theme**, four accents, mobile layout
 - **Shortcuts**: `Ctrl/Cmd+K` palette, `Ctrl/Cmd+Shift+O` new chat, `Esc` closes overlays
 
+## Accounts
+
+There is **no public sign-up**. Accounts are created by the owner, two ways:
+
+```bash
+node scripts/create-user.mjs you@example.com "your-password" "Your name"
+```
+
+or set `ADMIN_EMAIL` and `ADMIN_PASSWORD` (8+ characters) before the first start and the account is
+created on boot. A running server picks up accounts created by the script on the next sign-in, so
+you don't have to restart it.
+
+To reopen public sign-up, set `ALLOW_SIGNUP=1`.
+
 ## Adding your model key
 
 **From the app** (easiest): the `+` menu → *API key & search* → paste the key → Save. It is stored
@@ -112,6 +126,8 @@ app answers from its deterministic skills and never calls the network.
 | `MODEL_FAST` | `meta/llama-3.1-8b-instruct` | Upstream model behind Technova 1.0 Flash |
 | `MODEL_PRO` | `meta/llama-3.3-70b-instruct` | Upstream model behind Technova 1.5 Pro |
 | `SECURE_COOKIES` | off | Set to `1` when serving over HTTPS |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | — | Create the first account on boot |
+| `ALLOW_SIGNUP` | off | Set to `1` to allow public sign-up |
 | `TAVILY_API_KEY` | — | Enables web search |
 | `SEARCH_URL` | — | SearxNG JSON endpoint, if you prefer self-hosting search |
 | `ALLOW_LOCAL_FETCH` | off | Dev only: let the page reader reach localhost |
