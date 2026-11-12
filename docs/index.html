@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technova AI — Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600&family=Fragment+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff; --side:#f9f9f9; --surface:#ffffff; --surface-2:#f4f4f4; --hover:#ececec;
+  --border:#e5e5e5; --border-strong:#d9d9d9;
+  --text:#0d0d0d; --text-dim:#5d5d5d; --text-faint:#8f8f8f;
+  --accent:#0d0d0d; --accent-fg:#ffffff; --user-bubble:#f4f4f4;
+  --code-bg:#0d0d0d; --code-head:#1a1a1a; --code-text:#e8e8e8;
+  --font-body:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-display:var(--font-body);
+  --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --max:768px; --r:12px;
+}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]){
+    --bg:#212121; --side:#171717; --surface:#212121; --surface-2:#303030; --hover:#2f2f2f;
+    --border:#3c3c3c; --border-strong:#4a4a4a;
+    --text:#ececec; --text-dim:#b4b4b4; --text-faint:#9a9a9a;
+    --accent:#ffffff; --accent-fg:#0d0d0d; --user-bubble:#303030;
+    --code-bg:#0d0d0d; --code-head:#1a1a1a; --code-text:#e8e8e8;
+  }
+}
+html[data-theme="dark"]{
+  --bg:#212121; --side:#171717; --surface:#212121; --surface-2:#303030; --hover:#2f2f2f;
+  --border:#3c3c3c; --border-strong:#4a4a4a;
+  --text:#ececec; --text-dim:#b4b4b4; --text-faint:#9a9a9a;
+  --accent:#ffffff; --accent-fg:#0d0d0d; --user-bubble:#303030;
+}
+html[data-theme="light"]{
+  --bg:#ffffff; --side:#f9f9f9; --surface:#ffffff; --surface-2:#f4f4f4; --hover:#ececec;
+  --border:#e5e5e5; --border-strong:#d9d9d9;
+  --text:#0d0d0d; --text-dim:#5d5d5d; --text-faint:#8f8f8f;
+  --accent:#0d0d0d; --accent-fg:#ffffff; --user-bubble:#f4f4f4;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--font-body);font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+}
+button{font-family:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{margin:0;font-weight:400;letter-spacing:-0.01em}
+p{margin:0}
+.mono{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:260px 1fr;height:100dvh;min-width:0}
+.scrim{display:none}
+
+/* ---------- sidebar ---------- */
+.side{display:flex;flex-direction:column;min-width:0;background:var(--side);padding:8px}
+.side__top{display:flex;align-items:center;gap:6px;padding:2px 2px 10px}
+.brand{display:flex;align-items:center;gap:9px;padding:6px;border-radius:8px;font-size:15px;font-weight:600;flex:1;min-width:0}
+.brand:hover{background:var(--hover)}
+.brand__mark{
+  width:26px;height:26px;border-radius:50%;flex:0 0 auto;background:var(--accent);color:var(--accent-fg);
+  display:grid;place-items:center;font-size:15px;font-weight:600;line-height:1;
+}
+.brand__mark::after{content:"∞"}
+.brand small{display:none}
+.brand__name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.navrow{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:8px 10px;border:0;border-radius:8px;background:none;
+  color:var(--text);font-size:14px;font-weight:400;text-align:left;cursor:pointer;transition:background .12s;
+}
+.navrow:hover{background:var(--hover)}
+.navrow svg{width:18px;height:18px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.chats{flex:1;overflow-y:auto;min-height:0;padding:10px 0 6px;margin-top:4px}
+.chats__label{padding:6px 10px;font-size:12px;color:var(--text-faint);font-weight:500}
+.chat-item{
+  display:block;width:100%;text-align:left;background:none;border:0;border-radius:8px;
+  padding:8px 10px;font-size:14px;color:var(--text);cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .12s;
+}
+.chat-item:hover{background:var(--hover)}
+.chat-item[aria-current="true"]{background:var(--hover)}
+.chats::-webkit-scrollbar{width:8px}
+.chats::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px}
+
+.side__foot{border-top:1px solid var(--border);padding-top:8px;display:grid;gap:4px}
+.langrow{display:flex;align-items:center;gap:8px;padding:4px 10px}
+.langrow svg{width:16px;height:16px;stroke:var(--text-dim);fill:none;stroke-width:1.7;flex:0 0 auto}
+.langpick{
+  appearance:none;background:none;border:0;color:var(--text-dim);font-size:13px;
+  width:100%;padding:4px 18px 4px 0;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 9px) 55%,calc(100% - 4px) 55%;
+  background-size:5px 5px;background-repeat:no-repeat;
+}
+.userrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:default}
+.userrow:hover{background:var(--hover)}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;font-size:12px;font-weight:600;flex:0 0 auto}
+.userrow b{display:block;font-size:13.5px;font-weight:500;line-height:1.3}
+.userrow span{display:block;font-size:11.5px;color:var(--text-faint);line-height:1.3}
+.pill{display:none}
+
+/* ---------- main ---------- */
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg);position:relative}
+.topbar{display:flex;align-items:center;gap:6px;padding:8px 12px;min-height:52px}
+.modelbtn{
+  position:relative;display:inline-flex;align-items:center;gap:5px;
+  padding:6px 9px;border-radius:8px;color:var(--text);
+  font-size:17px;font-weight:600;letter-spacing:-0.01em;cursor:pointer;transition:background .12s;
+}
+.modelbtn:hover{background:var(--hover)}
+.modelbtn svg{width:16px;height:16px;flex:0 0 auto;stroke:var(--text-faint);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.modelsel{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;cursor:pointer;appearance:none;background:none;font-size:16px}
+.modelbtn:focus-within{outline:2px solid var(--border-strong);outline-offset:1px}
+.mmark{
+  width:22px;height:22px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  font-size:13px;font-weight:700;line-height:1;color:#fff;
+  background:linear-gradient(135deg,#2f6df6,#7b3ff2);
+}
+.mmark.pro{background:linear-gradient(135deg,#f59e0b,#e0442f)}
+.msg.has-think{flex-direction:column;align-items:stretch}
+.think{border:1px solid var(--border);border-radius:12px;background:var(--surface-2);margin-bottom:12px;overflow:hidden;max-width:100%}
+.think__head{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:9px 12px;font-family:inherit;font-size:12.5px;color:var(--text-dim);cursor:pointer;text-align:left}
+.think__head:hover{background:var(--hover)}
+.think__head svg{width:14px;height:14px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;margin-left:auto;transition:transform .18s;stroke-linecap:round;stroke-linejoin:round}
+.think[data-open="false"] .think__head svg{transform:rotate(-90deg)}
+.think__body{padding:0 12px 10px 12px;font-size:12.5px;color:var(--text-dim);line-height:1.6;display:grid;gap:3px}
+.think[data-open="false"] .think__body{display:none}
+.think__body div{display:flex;gap:7px}
+.think__body em{color:var(--text-faint);font-style:normal;flex:0 0 auto}
+.spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--border-strong);border-top-color:var(--text-dim);animation:spin .8s linear infinite;flex:0 0 auto}
+.think.done .spin{animation:none;background:var(--text-faint);border-color:var(--border-strong)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.jump{position:absolute;left:50%;transform:translateX(-50%);bottom:104px;background:var(--text);color:var(--bg);border:0;border-radius:99px;padding:7px 14px;font-size:12.5px;cursor:pointer;z-index:6;box-shadow:0 4px 14px rgba(0,0,0,.18);display:none}
+.jump.on{display:block}
+.searchwrap{position:relative;padding:2px 0 8px}
+.searchin{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px 7px 30px;font-family:inherit;font-size:13px;color:var(--text);outline:none}
+.searchin:focus{border-color:var(--border-strong)}
+.searchwrap svg{position:absolute;left:9px;top:11px;width:14px;height:14px;stroke:var(--text-faint);fill:none;stroke-width:2;stroke-linecap:round}
+.msgcount{font-size:11px;color:var(--text-faint);padding:0 10px 4px;min-height:14px}
+.act--stop{background:var(--accent);color:var(--accent-fg)}
+.act[hidden]{display:none !important}
+.think__raw{white-space:pre-wrap;color:var(--text-faint);max-height:130px;overflow:auto;font-size:12px;line-height:1.55;margin-top:2px}
+.act--stop svg{stroke:var(--accent-fg)}
+.charwrap{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11.5px;color:var(--text-faint)}
+.hint{flex:1;display:flex;justify-content:center}
+.apistat{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim);margin-bottom:12px}
+.apistat i{width:7px;height:7px;border-radius:50%;background:var(--text-faint);flex:0 0 auto}
+.apistat.on i{background:#22c55e}
+.apistat.warn i{background:#f59e0b}
+.apilabel{display:block;font-size:11.5px;color:var(--text-faint);margin:12px 0 5px}
+.apiout{font-size:12px;color:var(--text-dim);margin-top:8px;line-height:1.5;min-height:16px}
+.topbar__right{margin-left:auto;display:flex;align-items:center;gap:2px}
+.icon-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border:0;background:none;color:var(--text-dim);padding:8px;border-radius:8px;
+  font-size:13px;cursor:pointer;transition:background .12s,color .12s;
+}
+.icon-btn:hover{background:var(--hover);color:var(--text)}
+.icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.burger{display:none}
+.topbar__title,.topbar__model{display:none}
+
+/* thread */
+.thread{flex:1;overflow-y:auto;min-height:0;scroll-behavior:smooth}
+.thread__in{max-width:var(--max);margin:0 auto;padding:20px 20px 10px;display:flex;flex-direction:column;gap:22px;min-height:100%}
+.thread--empty .thread__in{justify-content:center;padding-bottom:56px}
+.thread::-webkit-scrollbar{width:10px}
+.thread::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px}
+
+/* empty state */
+.hello{text-align:center;padding:0}
+.hello h1{font-size:28px;font-weight:400;color:var(--text);letter-spacing:-0.015em}
+.hello__sub{color:var(--text-dim);font-size:15px;margin-top:10px}
+.hello__chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:26px}
+.hello__chips button{
+  border:1px solid var(--border);background:var(--bg);border-radius:99px;
+  padding:8px 14px;font-size:13px;color:var(--text-dim);cursor:pointer;transition:.14s;
+}
+.hello__chips button:hover{background:var(--hover);color:var(--text);border-color:var(--border-strong)}
+
+/* messages */
+.msg{display:flex;min-width:0;animation:rise .22s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.msg__avatar{display:none}
+.msg--user{justify-content:flex-end}
+.msg--user .msg__bubble{
+  max-width:75%;background:var(--user-bubble);color:var(--text);
+  border-radius:20px;padding:10px 16px;font-size:15px;line-height:1.6;
+  overflow-wrap:break-word;min-width:0;
+}
+.msg__body{min-width:0;flex:1;font-size:15px;line-height:1.75;color:var(--text)}
+.msg__body p{overflow-wrap:break-word}
+.msg__body p + p{margin-top:12px}
+.msg__body strong{font-weight:600}
+.msg__body ul,.msg__body ol{margin:10px 0 0;padding-left:22px;display:grid;gap:6px}
+.msg__body li{color:var(--text);overflow-wrap:break-word}
+.msg__body ul + p,.msg__body ol + p{margin-top:12px}
+.msg__body code{
+  font-family:var(--font-mono);font-size:12.8px;background:var(--surface-2);
+  border-radius:5px;padding:1.5px 5px;color:var(--text);
+}
+.msg__meta{display:flex;align-items:center;gap:2px;margin-top:6px;flex-wrap:wrap}
+.msg__meta > span{font-size:11.5px;color:var(--text-faint);padding:3px 6px;border-radius:6px}
+.msg__meta button{
+  background:none;border:0;color:var(--text-faint);font-size:11.5px;
+  padding:3px 7px;border-radius:6px;cursor:pointer;transition:.12s;
+}
+.msg__meta button:hover{background:var(--hover);color:var(--text)}
+.msg__meta .dot{display:none}
+.msg__meta > span:nth-child(3){display:none}
+
+/* code */
+.code{margin-top:12px;border-radius:12px;overflow:hidden;background:var(--code-bg);border:1px solid rgba(255,255,255,.08)}
+.code__bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--code-head);border-bottom:1px solid rgba(255,255,255,.08)}
+.code__bar span{font-family:var(--font-body);font-size:12px;color:#b4b4b4}
+.code__bar button{
+  margin-left:auto;background:none;border:1px solid rgba(255,255,255,.16);border-radius:6px;
+  color:#d4d4d4;font-size:11px;padding:3px 8px;cursor:pointer;
+}
+.code__bar button:hover{background:rgba(255,255,255,.1);color:#fff}
+.code pre{margin:0;padding:14px;overflow-x:auto;font-family:var(--font-mono);font-size:13px;line-height:1.75;color:var(--code-text)}
+.k{color:#f0b37e}.s{color:#9ed3a8}.c{color:#8b8b8b}.f{color:#e6c07b}
+
+/* typing */
+.typing{display:inline-flex;gap:4px;align-items:center;padding:6px 0}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--text-faint);display:block;animation:bob 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}
+.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bob{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+/* composer */
+.composer{padding:0 20px 14px;background:var(--bg)}
+.composer__in{max-width:var(--max);margin:0 auto}
+.box{
+  display:flex;align-items:flex-end;gap:6px;
+  background:var(--surface);border:1px solid var(--border-strong);border-radius:26px;
+  padding:7px 8px 7px 10px;box-shadow:0 2px 10px rgba(0,0,0,.05);
+  transition:border-color .14s, box-shadow .14s;
+}
+.box:focus-within{border-color:var(--text-faint);box-shadow:0 3px 14px rgba(0,0,0,.08)}
+.box textarea{
+  flex:1;min-width:0;resize:none;border:0;outline:0;background:none;color:var(--text);
+  font-family:var(--font-body);font-size:15px;line-height:1.6;padding:8px 2px;max-height:180px;
+}
+.box textarea::placeholder{color:var(--text-faint)}
+.act{
+  width:34px;height:34px;flex:0 0 auto;border-radius:50%;border:0;background:none;
+  display:grid;place-items:center;cursor:pointer;color:var(--text-dim);transition:.14s;
+}
+.act:hover{background:var(--hover);color:var(--text)}
+.act svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.act--attach{color:var(--text-dim)}
+.act--send{background:var(--accent);color:var(--accent-fg)}
+.act--send:hover{opacity:.85;background:var(--accent);color:var(--accent-fg)}
+.act--send:disabled{background:var(--surface-2);color:var(--text-faint);cursor:not-allowed;opacity:1}
+.act--mic.rec{background:var(--surface-2);color:var(--text)}
+.wave{display:none;gap:2px;align-items:center;height:16px;margin-right:2px}
+.wave.on{display:flex}
+.wave i{width:2px;background:var(--text-dim);border-radius:2px;height:6px;animation:wv .8s infinite ease-in-out}
+.wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.2s}
+.wave i:nth-child(4){animation-delay:.3s}.wave i:nth-child(5){animation-delay:.15s}
+@keyframes wv{0%,100%{height:5px}50%{height:15px}}
+.hint{display:flex;justify-content:center;margin-top:8px;font-size:11.5px;color:var(--text-faint);text-align:center}
+.hint kbd{display:none}
+
+/* ---------- drawer ---------- */
+.dscrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:44;opacity:0;pointer-events:none;transition:opacity .2s}
+.dscrim.on{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);z-index:45;
+  background:var(--bg);border-left:1px solid var(--border);
+  transform:translateX(102%);transition:transform .24s cubic-bezier(.2,.7,.3,1);
+  display:flex;flex-direction:column;
+}
+.drawer.open{transform:none}
+.drawer__head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.drawer__title{font-size:16px;font-weight:600;letter-spacing:-0.01em}
+.drawer__tabs{display:flex;gap:2px;margin-left:auto}
+.dtab{border:0;background:none;border-radius:8px;padding:6px 10px;font-size:13px;color:var(--text-dim);cursor:pointer}
+.dtab:hover{background:var(--hover)}
+.dtab[aria-selected="true"]{background:var(--surface-2);color:var(--text)}
+.drawer__body{flex:1;overflow-y:auto;padding:16px;min-height:0}
+.drawer__body::-webkit-scrollbar{width:8px}
+.drawer__body::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px}
+.dnote{font-size:12.5px;color:var(--text-dim);line-height:1.55;margin-bottom:14px}
+.skill{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)}
+.skill:first-child{border-top:1px solid var(--border)}
+.skill__txt{flex:1;min-width:0}
+.skill b{display:block;font-size:14px;font-weight:500}
+.skill p{font-size:12.5px;color:var(--text-dim);margin-top:2px;line-height:1.5;overflow-wrap:break-word}
+.sw{position:relative;width:38px;height:21px;flex:0 0 auto;border-radius:99px;background:var(--surface-2);border:1px solid var(--border-strong);cursor:pointer;transition:.16s;padding:0;margin-top:2px}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--text-faint);transition:.16s}
+.sw[aria-checked="true"]{background:var(--accent);border-color:var(--accent)}
+.sw[aria-checked="true"]::after{left:18px;background:var(--accent-fg)}
+.sec{margin-top:22px}
+.sec__h{font-size:12px;color:var(--text-faint);font-weight:500;margin-bottom:8px}
+.fieldrow{display:flex;gap:7px;margin-bottom:8px}
+.txtin{
+  flex:1;min-width:0;background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;
+  padding:9px 11px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;
+}
+.txtin:focus{border-color:var(--text-faint)}
+.txtin::placeholder{color:var(--text-faint)}
+textarea.txtin{resize:vertical;min-height:68px;line-height:1.5}
+.btn-s{
+  border:1px solid var(--border-strong);background:var(--bg);color:var(--text);
+  border-radius:10px;padding:9px 13px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:.14s;
+}
+.btn-s:hover{background:var(--hover)}
+.btn-s--solid{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn-s--solid:hover{opacity:.88;background:var(--accent)}
+.btn-s--ghost{background:none}
+.btn-s:disabled{opacity:.5;cursor:not-allowed}
+.srcitem{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)}
+.srcitem__t{flex:1;min-width:0}
+.srcitem b{display:block;font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srcitem span{font-size:11.5px;color:var(--text-faint)}
+.srcitem button{background:none;border:0;color:var(--text-faint);cursor:pointer;font-size:14px;line-height:1;padding:4px;border-radius:6px}
+.srcitem button:hover{background:var(--hover);color:var(--text)}
+.bar{height:4px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;width:0;background:var(--text);transition:width .18s}
+.syncnote{font-size:11.5px;color:var(--text-faint);line-height:1.5;min-height:17px}
+
+/* toast */
+.toast{
+  position:fixed;left:50%;bottom:96px;transform:translate(-50%,10px);
+  background:var(--text);color:var(--bg);border-radius:10px;
+  padding:9px 16px;font-size:13px;opacity:0;pointer-events:none;
+  transition:opacity .18s, transform .18s;z-index:60;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001s !important;transition-duration:.001s !important}
+  .thread{scroll-behavior:auto}
+}
+
+/* mobile */
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{
+    position:fixed;inset:0 auto 0 0;width:280px;z-index:40;transform:translateX(-100%);
+    transition:transform .24s cubic-bezier(.2,.7,.3,1);box-shadow:0 0 40px rgba(0,0,0,.25);
+  }
+  .side.open{transform:none}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:39;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .burger{display:inline-flex}
+  .thread__in{padding:16px 16px 8px}
+  .composer{padding:0 12px 12px}
+  .hello h1{font-size:24px}
+  .drawer{width:100%}
+  .modelbtn{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="scrim" id="scrim"></div>
+
+  <!-- sidebar -->
+  <aside class="side" id="side">
+    <div class="side__top">
+      <a class="brand" href="#"><span class="brand__mark"></span><span class="brand__name">Technova AI</span></a>
+    </div>
+
+    <button class="navrow" id="newChat">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      New chat
+    </button>
+    <button class="navrow" id="openSkills">
+      <svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+      Skills
+    </button>
+    <button class="navrow" id="openSources">
+      <svg viewBox="0 0 24 24"><path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+      Sources
+    </button>
+
+    <div class="searchwrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input class="searchin" id="chatSearch" placeholder="Search chats" aria-label="Search chats">
+    </div>
+
+    <div class="chats" id="chats">
+      <div class="chats__label">Chats</div>
+      <div class="msgcount" id="chatCount"></div>
+      <div id="chatList"></div>
+    </div>
+
+    <div class="side__foot">
+      <div class="langrow">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>
+        <select class="langpick" id="lang" aria-label="Reply language">
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+          <option value="ta">தமிழ்</option>
+          <option value="te">తెలుగు</option>
+          <option value="bn">বাংলা</option>
+          <option value="kn">ಕನ್ನಡ</option>
+          <option value="ml">മലയാളം</option>
+          <option value="mr">मराठी</option>
+          <option value="gu">ગુજરાતી</option>
+          <option value="pa">ਪੰਜਾਬੀ</option>
+        </select>
+      </div>
+      <div class="userrow">
+        <span class="avatar">S</span>
+        <div><b>Sruthin</b><span>Demo build · no API key</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- main -->
+  <div class="main">
+    <div class="topbar">
+      <button class="icon-btn burger" id="burger" aria-label="Open menu">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="modelbtn">
+        <span class="mmark" id="modelMark">∞</span>
+        <span id="modelLabel">Technova 1.0 Flash</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        <select class="modelsel" id="model" aria-label="Model">
+          <option value="Technova 1.0 Flash">Technova 1.0 Flash</option>
+          <option value="Technova 1.5 Pro">Technova 1.5 Pro</option>
+        </select>
+      </div>
+      <div class="topbar__title" id="chatTitle" hidden></div>
+      <div class="topbar__right">
+        <button class="icon-btn" id="exportChat" title="Export this chat" aria-label="Export this chat">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M5 21h14"/></svg>
+        </button>
+        <button class="icon-btn" id="clearChat" title="Clear conversation" aria-label="Clear conversation">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>
+        </button>
+        <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch theme">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <button class="jump" id="jumpBtn">Jump to latest</button>
+    <div class="thread" id="thread">
+      <div class="thread__in" id="threadIn"></div>
+    </div>
+
+    <div class="composer">
+      <div class="composer__in">
+        <div class="box">
+          <button class="act act--attach" id="attachBtn" title="Add a source" aria-label="Add a source">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <textarea id="input" rows="1" placeholder="Ask anything" aria-label="Message"></textarea>
+          <div class="wave" id="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <button class="act act--mic" id="mic" aria-label="Voice input" title="Voice input">
+            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+          </button>
+          <button class="act act--send" id="send" aria-label="Send" disabled>
+            <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+          <button class="act act--stop" id="stop" aria-label="Stop generating" title="Stop generating" hidden>
+            <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+          </button>
+        </div>
+        <div class="charwrap">
+          <span></span>
+          <span class="hint"><span id="status">Technova AI can make mistakes. Check important info.</span></span>
+          <span id="charCount"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dscrim" id="dscrim"></div>
+<aside class="drawer" id="drawer" aria-label="Skills and sources">
+  <div class="drawer__head">
+    <span class="drawer__title" id="drawerTitle">Skills</span>
+    <div class="drawer__tabs" role="tablist">
+      <button class="dtab" role="tab" aria-selected="true" data-tab="skills">Skills</button>
+      <button class="dtab" role="tab" aria-selected="false" data-tab="sources">Sources</button>
+      <button class="dtab" role="tab" aria-selected="false" data-tab="api">API</button>
+    </div>
+    <button class="icon-btn" id="drawerClose" aria-label="Close">&#10005;</button>
+  </div>
+  <div class="drawer__body">
+
+    <div id="paneSkills">
+      <p class="dnote">Skills run inside this page — no API key, no server, no model call. Turn them on and off; the assistant uses the enabled ones first.</p>
+      <div id="skillList"></div>
+    </div>
+
+    <div id="paneSources" hidden>
+      <p class="dnote">Add pages, notes or files. They are split into chunks, indexed in the background and stored in this browser only. Nothing is uploaded and no key is used.</p>
+
+      <div class="fieldrow">
+        <input class="txtin" id="srcUrl" placeholder="https://… (page must allow browser fetches)">
+        <button class="btn-s" id="addUrlBtn">Add</button>
+      </div>
+      <div class="fieldrow">
+        <textarea class="txtin" id="srcText" placeholder="…or paste text here"></textarea>
+      </div>
+      <div class="fieldrow">
+        <input class="txtin" id="srcTitle" placeholder="Title (optional)">
+        <button class="btn-s btn-s--solid" id="addTextBtn">Add text</button>
+      </div>
+      <div class="fieldrow">
+        <button class="btn-s btn-s--ghost" id="addFileBtn">Upload .txt / .md / .json</button>
+        <input type="file" id="srcFile" accept=".txt,.md,.markdown,.json,.csv,.html,text/*" hidden>
+      </div>
+
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="syncnote" id="syncNote">Index ready.</div>
+
+      <div class="sec">
+        <div class="sec__h">Indexed sources <span id="srcCount"></span></div>
+        <div id="srcList"></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec__h">Maintenance</div>
+        <div class="fieldrow">
+          <button class="btn-s btn-s--ghost" id="reindexBtn">Re-index</button>
+          <button class="btn-s btn-s--ghost" id="seedBtn">Load examples</button>
+        </div>
+        <div class="fieldrow">
+          <button class="btn-s btn-s--ghost" id="exportBtn">Export</button>
+          <button class="btn-s btn-s--ghost" id="importBtn">Import</button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+        </div>
+        <p class="dnote" style="margin:10px 0 0">A page can only fetch sites that send permissive CORS headers. If a URL fails, paste the text instead — retrieval works exactly the same.</p>
+      </div>
+    </div>
+
+
+    <div id="paneApi" hidden>
+      <div class="apistat" id="apiStat"><i></i><span id="apiStatText">Local mode — answers come from the built-in skills.</span></div>
+
+      <p class="dnote">Answers use a live model when a key is configured, and fall straight back to the local skills when it isn't. The key is stored in this browser only and never written into the page.</p>
+
+      <label class="apilabel" for="apiKey">API key</label>
+      <div class="fieldrow">
+        <input class="txtin" id="apiKey" type="password" autocomplete="off" placeholder="paste your key (stored locally)">
+        <button class="btn-s" id="apiKeySave">Save</button>
+      </div>
+      <div class="fieldrow">
+        <button class="btn-s btn-s--ghost" id="apiKeyClear">Remove key</button>
+        <button class="btn-s btn-s--ghost" id="apiTest">Test</button>
+      </div>
+      <div class="apiout" id="apiOut"></div>
+
+      <label class="apilabel" for="apiEndpoint">Endpoint</label>
+      <input class="txtin" id="apiEndpoint" placeholder="https://integrate.api.nvidia.com/v1/chat/completions">
+
+      <label class="apilabel" for="apiModelFlash">Upstream model · Technova 1.0 Flash</label>
+      <input class="txtin" id="apiModelFlash" placeholder="meta/llama-3.1-8b-instruct">
+
+      <label class="apilabel" for="apiModelPro">Upstream model · Technova 1.5 Pro</label>
+      <input class="txtin" id="apiModelPro" placeholder="meta/llama-3.3-70b-instruct">
+
+      <div class="sec">
+        <div class="sec__h">Serving</div>
+        <label class="apilabel" style="margin-top:0">
+          <input type="checkbox" id="apiProxy"> Use the server proxy at <code>/api/chat</code>
+        </label>
+        <p class="dnote" style="margin:6px 0 0">Turn this on when you deploy with the included <code>api/chat.js</code> and an <code>NVIDIA_API_KEY</code> environment variable. The key then stays on the server and never reaches a visitor's browser — the only safe setup for a public site.</p>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- data ---------------- */
+  var LANGS = {
+    en:{name:"English", hello:"Namaste", ph:"Ask about Technova AI models, voice agents, pricing…"},
+    hi:{name:"हिन्दी", hello:"नमस्ते! मैं आपकी कैसे मदद कर सकता हूँ?", ph:"सर्वम मॉडल, वॉइस एजेंट या कीमत के बारे में पूछें…"},
+    ta:{name:"தமிழ்", hello:"வணக்கம்! நான் எப்படி உதவலாம்?", ph:"சர்வம் மாடல்கள், குரல் முகவர்கள் பற்றி கேளுங்கள்…"},
+    te:{name:"తెలుగు", hello:"నమస్కారం! నేను ఎలా సహాయపడగలను?", ph:"సర్వం మోడళ్లు, వాయిస్ ఏజెంట్ల గురించి అడగండి…"},
+    bn:{name:"বাংলা", hello:"নমস্কার! আমি কীভাবে সাহায্য করতে পারি?", ph:"সর্বম মডেল, ভয়েস এজেন্ট সম্পর্কে জিজ্ঞাসা করুন…"},
+    kn:{name:"ಕನ್ನಡ", hello:"ನಮಸ್ಕಾರ! ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?", ph:"ಸರ್ವಂ ಮಾದರಿಗಳು, ಧ್ವನಿ ಏಜೆಂಟ್ ಬಗ್ಗೆ ಕೇಳಿ…"},
+    ml:{name:"മലയാളം", hello:"നമസ്കാരം! എനിക്ക് എങ്ങനെ സഹായിക്കാം?", ph:"സർവം മോഡലുകൾ, വോയ്സ് ഏജന്റുകൾ എന്നിവയെക്കുറിച്ച് ചോദിക്കൂ…"},
+    mr:{name:"मराठी", hello:"नमस्कार! मी कशी मदत करू शकतो?", ph:"सर्वम मॉडेल्स, व्हॉइस एजंट किंवा किंमतीबद्दल विचारा…"},
+    gu:{name:"ગુજરાતી", hello:"નમસ્તે! હું કેવી રીતે મદદ કરી શકું?", ph:"સર્વમ મોડેલ્સ, વોઇસ એજન્ટ્સ વિશે પૂછો…"},
+    pa:{name:"ਪੰਜਾਬੀ", hello:"ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?", ph:"ਸਰਵਮ ਮਾਡਲਾਂ, ਵਾਇਸ ਏਜੰਟਾਂ ਬਾਰੇ ਪੁੱਛੋ…"}
+  };
+
+  var SCRIPTS = [
+    {re:/[\u0900-\u097F]/, name:"Devanagari (Hindi / Marathi)"},
+    {re:/[\u0980-\u09FF]/, name:"Bengali"},
+    {re:/[\u0A00-\u0A7F]/, name:"Gurmukhi (Punjabi)"},
+    {re:/[\u0A80-\u0AFF]/, name:"Gujarati"},
+    {re:/[\u0B00-\u0B7F]/, name:"Odia"},
+    {re:/[\u0B80-\u0BFF]/, name:"Tamil"},
+    {re:/[\u0C00-\u0C7F]/, name:"Telugu"},
+    {re:/[\u0C80-\u0CFF]/, name:"Kannada"},
+    {re:/[\u0D00-\u0D7F]/, name:"Malayalam"},
+    {re:/[\u0600-\u06FF]/, name:"Arabic script (Urdu / Kashmiri)"}
+  ];
+
+  /* knowledge base — sample content for this demo */
+  var KB = [
+    {
+      id:"overview", tags:["overview","who","what is infinity","about","company"],
+      k:["what is infinity","who are you","about infinity","what do you do","infinity ai","your company","tell me about"],
+      a:"**Technova AI** is an Indian AI company building a full-stack sovereign AI platform — applications, models and the infrastructure underneath.\n\nThree layers, one account:\n\n- **Applications** — Voice Agents, Work Agents, Cowork, Document AI, Content Studio and a Coding Agent\n- **Models** — speech, text and document models trained for 22 Indian languages and English\n- **Infrastructure** — a token factory that serves those models with data residency in India\n\nEverything runs on sovereign compute, built and operated in India."
+    },
+    {
+      id:"models", tags:["models","llm","list"],
+      k:["models","model list","what models","which model","infinity 1.0","infinity 1.5","flash","pro","which ai"],
+      a:"There are two models in this build:\n\n- **Technova 1.0 Flash** — the fast default. Built for quick answers, streaming and everyday chat.\n- **Technova 1.5 Pro** — the larger model. Slower per token, better at longer reasoning and multi-step questions.\n\nSwitch between them with the dropdown at the top of the chat. Speech, translation and document parsing are separate models and run through their own skills."
+    },
+    {
+      id:"tts", tags:["tts","speech","voice","audio"],
+      k:["text to speech","tts","vaani","voice synthesis","generate audio","speak","read aloud","clone voice"],
+      a:"**Text to speech** runs on Vaani. Here's the whole quickstart:\n\n```python\ntts_quickstart.py\nfrom technovaai import TechnovaAI\nfrom technovaai.play import save\n\nclient = TechnovaAI(api_subscription_key=\"YOUR_API_KEY\")\n\nresponse = client.text_to_speech.convert(\n    text=\"नमस्ते, कैसे हैं आप?\",\n    language_code=\"hi-IN\",\n    model=\"vaani:v4-flash\",\n    speaker=\"kavya_hi_conversational\",\n)\n\nsave(response, \"output.wav\")\n```\n\nInstall with `pip install technovaai`. Vaani handles Indian prosody, code-mixed sentences and correct pronunciation of names and numbers. Content Studio gives you the same thing from a browser, including voice cloning and video dubbing."
+    },
+    {
+      id:"stt", tags:["stt","transcription","speech recognition"],
+      k:["speech to text","stt","transcribe","transcription","asr","speech recognition","audio to text"],
+      a:"**Speech to text** runs on Shruti v4. It's built for the way India actually talks:\n\n- code-mixed speech (Hindi and English inside one sentence)\n- alphanumerics, names and numbers\n- 11 Indian languages plus English on the realtime path, 22 in batch\n- REST, WebSocket streaming and batch endpoints\n\nRoughly, you post an audio file or stream audio frames and get back a transcript with language detection and timestamps."
+    },
+    {
+      id:"translate", tags:["translation","language","indic"],
+      k:["translate","translation","mayura","convert language","hindi to tamil","document translation"],
+      a:"**Translation** is handled by Setu — state-of-the-art across 23 languages, with Indian-language pairs as the focus rather than an afterthought.\n\nThere are two surfaces: the API for text, and **Document Translation** for whole files. A PDF or Office document keeps its layout and comes back in up to 12 Indian languages per job — PDF stays PDF, DOCX stays DOCX."
+    },
+    {
+      id:"voice", tags:["voice","agents","calls","telephony"],
+      k:["voice agent","voice agents","samvaad","calling","phone call","call center","ivr","outbound"],
+      a:"**Voice Agents** build, test and deploy AI calling agents in Indian languages. The loop is describe → test → get a number → go live, in minutes.\n\nWhat's included:\n\n- 11 Indian languages plus English, with mid-call language switching\n- barge-in and interruptions, long silences, voicemail detection\n- telephony — rent an Indian number with KYC or bring your own provider\n- simulated test calls before launch, then outbound campaigns at scale\n- transcripts, evaluations and call analytics\n- the same agent on WhatsApp, web and API\n\nPricing is per minute, and data stays in India."
+    },
+    {
+      id:"pricing", tags:["price","cost","pricing","rate"], boost:1.9,
+      k:["price","pricing","cost","how much","rate","per minute","rupees","₹","billing","plan"],
+      a:"**Voice agent pricing** is per minute:\n\n- Pay as you go — **₹3.50 / min**\n- Pro — **₹3.25 / min**\n- Growth — **₹3.15 / min**\n- Business — **₹3.00 / min**\n- Enterprise (2 lakh minutes a month and above) — custom, on committed volume\n\nThat includes telephony when you rent a number from Technova AI. Model APIs are billed separately on usage — check the pricing page for the current rates per token, per minute of audio and per page of parsing."
+    },
+    {
+      id:"languages", tags:["languages","indic","scripts"],
+      k:["languages","how many languages","which languages","indic","hindi","tamil","telugu","bengali","marathi","gujarati","kannada","malayalam","punjabi","odia","assamese","urdu","sanskrit"],
+      a:"**22 Indian languages plus English** across the platform — models are trained natively, not adapted.\n\nहिन्दी · বাংলা · தமிழ் · తెలుగు · मराठी · ગુજરાતી · ಕನ್ನಡ · മലയാളം · ਪੰਜਾਬੀ · ଓଡ଼ିଆ · অসমীয়া · اردو · नेपाली · کٲشُر · संस्कृतम् · संताली · মৈতৈলোন্ · बर' · मैथिली · डोगरी and more.\n\nVoice agents currently cover 11 Indian languages plus English; translation covers 23 languages."
+    },
+    {
+      id:"cowork", tags:["cowork","workspace","research","automation"],
+      k:["cowork","work agent","work agents","automation","agentic workspace","schedule","research","spreadsheet","presentation"],
+      a:"**Cowork** is the agentic workspace — it connects your business context, tools and teams so work actually finishes.\n\nWhat it does:\n\n- **Research** — searches the web and your connected apps as it writes, and re-plans when it learns something new\n- **Data analysis** — pulls numbers from your data tools and explains the reason behind the change\n- **Presentations** — drafts decks from live figures\n- **Workflow automations** — daily reports and weekly summaries on a schedule\n- **Integrations** — 100+ apps, from Slack and Gmail to Snowflake and GitHub\n\n**Work Agents** is the adjacent product: describe the outcome, connect the tools, and it returns finished output for review. Agents can create sub-agents and run on a schedule."
+    },
+    {
+      id:"api", tags:["api","developers","sdk","code"],
+      k:["api","sdk","python","javascript","quickstart","endpoint","websocket","integration","developer","docs","how do i start","get started","api key","build an app","build with","integrate","start building","how do i use","call the model"],
+      a:"**Start with the API.** One key, one install:\n\n```python\nclient.py\nfrom technovaai import TechnovaAI\n\nclient = TechnovaAI(api_subscription_key=\"YOUR_API_KEY\")\n\nresponse = client.chat.completions(\n    messages=[{\"role\": \"user\", \"content\": \"नमस्ते\"}],\n    model=\"infinity-105b\",\n)\n\nprint(response)\n```\n\n- REST, WebSocket and batch endpoints\n- official Python and JavaScript SDKs\n- transcription, speech synthesis, translation, chat and document extraction behind the same key\n- you can also build agents from an AI assistant over the MCP server\n\nThe docs live at `docs.infinity.ai`."
+    },
+    {
+      id:"parse", tags:["documents","ocr","parse"],
+      k:["parse","document ai","ocr","invoice","pdf","extract","handwritten","kyc"],
+      a:"**Document AI / Parse** turns paper into data. Invoices, KYC documents, land deeds and handwritten manuscripts come out as JSON, CSV, Markdown or DOCX.\n\nIt's built for the messy end of Indian paperwork — scans, stamps, mixed scripts, multi-column forms — and runs from the dashboard with no integration, or through the API."
+    },
+    {
+      id:"deploy", tags:["deploy","security","enterprise","onprem"],
+      k:["deploy","deployment","on-prem","on premise","air-gapped","security","compliance","governance","audit","residency","private cloud","enterprise"],
+      a:"**Enterprise deployment** is built around your risk team:\n\n- private cloud, on-premise, hybrid, or fully air-gapped\n- bring your own model or use Technova AI's\n- every agent action logged and traceable, with role-based access and audit trails in the core\n- data residency in India — including any PII\n- forward-deployed engineers who build alongside your team until you're live\n- swap vendors without rewriting workflows"
+    },
+    {
+      id:"impact", tags:["impact","india","scale","customers"], boost:1.7,
+      k:["impact","how big","customers","scale","800 million","population","case study","who uses"],
+      a:"The pitch is population-scale. Government services reaching **800 million citizens**, enterprises reworking customer experience, and 10B+ tokens served on the platform at a median latency under 100ms with a 99.9% uptime SLA.\n\nMost of that value is simply language: a citizen who can ask in Tamil, Bhojpuri-accented Hindi or Assamese gets an answer instead of a form."
+    },
+    {
+      id:"careers", tags:["jobs","careers","hiring"],
+      k:["career","careers","job","jobs","hiring","internship","apply","work at infinity"],
+      a:"Technova AI hires in Bengaluru across research, applied ML, infrastructure and forward-deployed engineering. The careers page on `infinity.ai` carries the live list — I can't see openings from here, so treat that page as the source of truth rather than anything I'd guess."
+    }
+  ];
+
+  /* native-script concepts: lets a question asked in an Indian script hit the right entry */
+  var NATIVE = [
+    {keys:["price","pricing","cost","rate"], terms:["विले","किंमत","किमत","விலை","ధర","দাম","ಮೌಲ್ಯ","ಬೆಲೆ","വില","કિંમત","ਕੀਮਤ","قیمت"]},
+    {keys:["voice agent","calling","price"], terms:["वॉइस","வாய்ஸ்","వాయిస్","ভয়েস","ವಾಯ್ಸ್","വോയ്സ്","વોઇસ","ਵਾਇਸ","وائس","कॉल","அழைப்பு"]},
+    {keys:["text to speech","tts","bulbul"], terms:["टेक्स्ट टू स्पीच","பேச்சு","టెక్స్ట్","টেক্সট টু স্পিচ","ടെക്സ്റ്റ്","ટેક્સ્ટ","ਟੈਕਸਟ","बुलबुल","புல்புல்","బుల్బుల్","बोलने"]},
+    {keys:["speech to text","transcribe"], terms:["ஒலி","ஒலிபெயர்ப்பு","ట్రాన్స్క్రిప్ట్","ট্রান্সক্রিপ্ট","ट्रांसक्रिप्ट","ಟ್ರಾನ್ಸ್ಕ್ರಿಪ್ಟ್","ട്രാൻസ്ക്രിപ്റ്റ്","ટ્રાન્સક્રિપ્ટ","ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ"]},
+    {keys:["models","model"], terms:["मॉडल","மாடல்","మోడల్","মডেল","ಮಾದರಿ","മോഡൽ","મોડેલ","ਮਾਡਲ","ماڈل"]},
+    {keys:["languages","indic"], terms:["भाषा","மொழி","భాష","ভাষা","ಭಾಷೆ","ഭാഷ","ભાષા","ਭਾਸ਼ਾ","زبان"]},
+    {keys:["translate","translation"], terms:["अनुवाद","மொழிபெயர்","అనువాద","অনুবাদ","ಅನುವಾದ","വിവർത്തന","અનુવાદ","ਅਨੁਵਾਦ","ترجمہ"]},
+    {keys:["documents","parse","pdf"], terms:["दस्तावेज़","ஆவணம்","పత్రం","নথি","ದಾಖಲೆ","രേഖ","દસ્તાવેજ","ਦਸਤਾਵੇਜ਼"]},
+    {keys:["api","developers","get started"], terms:["कोड","குறியீடு","కోడ్","কোড","ಕೋಡ್","കോഡ്","કોડ","ਕੋਡ"]}
+  ];
+  function expand(text){
+    var out = text.toLowerCase();
+    NATIVE.forEach(function(n){
+      for(var i=0;i<n.terms.length;i++){
+        if(out.indexOf(n.terms[i]) > -1){ out += " " + n.keys.join(" "); return; }
+      }
+    });
+    return out;
+  }
+
+  var GREET_RE = /^(hi|hey|hello|yo|namaste|namaskar|vanakkam|nomoshkar|hola|good (morning|evening|afternoon))\b/i;
+  var THANKS_RE = /(thanks|thank you|dhanyavaad|dhanyavad|nandri|shukriya)\b/i;
+  var BYE_RE = /(bye|goodbye|see you|that'?s all)\b/i;
+
+  var FALLBACKS = [
+    "I don't have that in my notes. This demo covers models, voice agents, pricing, languages, the API, deployment and document parsing. Try one of those, or ask me to compare two products.",
+    "That's outside what this demo covers. I can talk about the two chat models (Technova 1.0 Flash and 1.5 Pro), Voice Agents and their per-minute pricing, Cowork, the API quickstart, or enterprise deployment.",
+    "Not something I can answer from the material I was built with. For anything specific to your account or a live quote, the pricing and docs pages are the right place — want me to summarise a product instead?"
+  ];
+
+  /* ---------------- state ---------------- */
+  var state = {
+    chats:[],
+    active:null,
+    model:"Technova 1.0 Flash",
+    lang:"en",
+    busy:false,
+    skills:{},
+    sources:[],
+    index:[],
+    indexing:false,
+    runId:0,
+    api:{ enabled:false, key:"", endpoint:"https://integrate.api.nvidia.com/v1/chat/completions", proxy:false, proxyOk:false,
+          models:{"Technova 1.0 Flash":"meta/llama-3.1-8b-instruct","Technova 1.5 Pro":"meta/llama-3.3-70b-instruct"} }
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var thread = $("thread"), threadIn = $("threadIn"), input = $("input"), sendBtn = $("send");
+
+  /* ---------------- markdown-lite ---------------- */
+  function esc(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function inline(s){
+    return esc(s)
+      .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+      .replace(/`([^`]+)`/g,"<code>$1</code>");
+  }
+  function renderTextBlock(text){
+    var lines = text.split("\n"), out = [], list = null, para = [];
+    function flushPara(){
+      if(para.length){ out.push("<p>"+inline(para.join(" "))+"</p>"); para = []; }
+    }
+    function flushList(){
+      if(list){ out.push("<"+list.tag+">"+list.items.map(function(i){return "<li>"+inline(i)+"</li>";}).join("")+"</"+list.tag+">"); list = null; }
+    }
+    lines.forEach(function(raw){
+      var line = raw.replace(/\s+$/,"");
+      if(!line.trim()){ flushPara(); flushList(); return; }
+      var m = line.match(/^\s*[-•]\s+(.*)$/);
+      var n = line.match(/^\s*\d+\.\s+(.*)$/);
+      if(m || n){
+        flushPara();
+        var tag = m ? "ul" : "ol";
+        if(!list || list.tag !== tag){ flushList(); list = {tag:tag, items:[]}; }
+        list.items.push((m ? m[1] : n[1]));
+      } else {
+        flushList();
+        para.push(line.trim());
+      }
+    });
+    flushPara(); flushList();
+    return out.join("");
+  }
+  /* splits an answer into text and code segments */
+  function segments(md){
+    var parts = [], re = /```([\s\S]*?)```/g, last = 0, m;
+    while((m = re.exec(md))){
+      if(m.index > last) parts.push({type:"text", body: md.slice(last, m.index)});
+      var block = m[1].replace(/^\n+|\n+$/g,"");
+      var nl = block.indexOf("\n");
+      var head = nl > -1 ? block.slice(0,nl) : "";
+      var body = nl > -1 ? block.slice(nl+1) : block;
+      if(/^(python|py|javascript|js|bash|sh|json|text)$/i.test(head.trim())){
+        var nl2 = body.indexOf("\n");
+        var first = (nl2 > -1 ? body.slice(0,nl2) : body).trim();
+        if(/^[\w.\-]+\.(py|js|ts|sh|json|txt|md)$/.test(first)){
+          head = first;
+          body = nl2 > -1 ? body.slice(nl2+1) : "";
+        }
+      }
+      parts.push({type:"code", head: head, body: body});
+      last = re.lastIndex;
+    }
+    if(last < md.length) parts.push({type:"text", body: md.slice(last)});
+    return parts;
+  }
+  function hlCode(text){
+    var re = /(#.*)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(from|import|as|def|return|print|class|with|for|if|else)\b/g;
+    var out = "", last = 0, m;
+    while((m = re.exec(text)) !== null){
+      out += esc(text.slice(last, m.index));
+      if(m[1]) out += '<span class="c">'+esc(m[1])+'</span>';
+      else if(m[2]) out += '<span class="s">'+esc(m[2])+'</span>';
+      else out += '<span class="k">'+esc(m[3])+'</span>';
+      last = re.lastIndex;
+    }
+    out += esc(text.slice(last));
+    return out;
+  }
+  function codeHTML(seg){
+    var body = hlCode(seg.body);
+    return '<div class="code"><div class="code__bar"><span>'+esc(seg.head||"snippet")+'</span>'+
+           '<button type="button" data-copy>Copy</button></div><pre>'+body+'</pre></div>';
+  }
+
+  /* ---------------- answering ---------------- */
+  function score(entry, text){
+    var s = 0, lower = text.toLowerCase();
+    entry.k.forEach(function(kw){
+      if(lower.indexOf(kw) > -1) s += Math.min(kw.length, 18);
+    });
+    return s;
+  }
+  function productAnswer(text){
+    var lower = text.toLowerCase().trim();
+    if(!lower) return null;
+    if(GREET_RE.test(lower) && lower.split(/\s+/).length < 6){
+      return "Namaste. Ask me anything about Technova AI — the models, Voice Agents and what they cost per minute, Cowork, the API, or how enterprise deployment works.";
+    }
+    if(THANKS_RE.test(lower) && lower.split(/\s+/).length < 6){
+      return "Any time. If you want, I can go deeper on one product — the voice-agent runtime and its pricing are usually the next useful thing.";
+    }
+    if(BYE_RE.test(lower) && lower.split(/\s+/).length < 6){
+      return "Goodbye. Everything above is sample content for this demo, so check the product docs for anything you plan to rely on.";
+    }
+    var probe = expand(lower);
+    var best = null, bestScore = 0;
+    KB.forEach(function(e){
+      var s = score(e, probe) * (e.boost || 1);
+      if(s > bestScore){ bestScore = s; best = e; }
+    });
+    if(best && bestScore >= 8) return best.a;
+    return null;
+  }
+
+  function scriptNote(text){
+    for(var i=0;i<SCRIPTS.length;i++){
+      if(SCRIPTS[i].re.test(text)) return SCRIPTS[i].name;
+    }
+    return null;
+  }
+
+  /* ================= skills engine ================= */
+  var SKILLS = [
+    {id:"product",   name:"Product knowledge", desc:"Built-in answers about Technova AI models, voice agents, pricing and deployment."},
+    {id:"knowledge", name:"Your sources",      desc:"Answers from the pages and documents you add under Sources. Indexed inside this page."},
+    {id:"math",      name:"Calculator",        desc:"Arithmetic, percentages and powers, computed locally and exactly."},
+    {id:"units",     name:"Unit converter",    desc:"Length, mass, temperature, data size, plus rupee and lakh/crore formatting."},
+    {id:"dates",     name:"Dates & time",      desc:"Today's date, the current IST time, and date arithmetic."},
+    {id:"snippets",  name:"Code snippets",     desc:"Copyable Python and JavaScript for speech, chat and parsing."},
+    {id:"lang",      name:"Language detection",desc:"Recognises the script you type in and says which one it is."},
+    {id:"voice",     name:"Speak replies",     desc:"Reads answers aloud with your browser's voice. No key, no network."}
+  ];
+  var DEFAULT_SKILLS = {product:true, knowledge:true, math:true, units:true, dates:true, snippets:true, lang:true, voice:false};
+  state.skills = Object.assign({}, DEFAULT_SKILLS);
+
+  function fmtNum(n){
+    if(!isFinite(n)) return String(n);
+    if(Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
+    return String(Math.round(n * 1e6) / 1e6);
+  }
+
+  /* --- calculator --- */
+  function evalExpr(src){
+    var toks = src.replace(/\s+/g,"").match(/(\d+\.?\d*|\.\d+|[+\-*/%^()])/g);
+    if(!toks) return null;
+    var out = [], ops = [], prec = {"+":1,"-":1,"*":2,"/":2,"%":2,"^":3};
+    function apply(){
+      var op = ops.pop();
+      if(op === "u-"){ if(!out.length) return false; out.push(-out.pop()); return true; }
+      var b = out.pop(), a = out.pop();
+      if(a === undefined || b === undefined) return false;
+      if(op === "+") out.push(a+b);
+      else if(op === "-") out.push(a-b);
+      else if(op === "*") out.push(a*b);
+      else if(op === "/") out.push(a/b);
+      else if(op === "%") out.push(a%b);
+      else if(op === "^") out.push(Math.pow(a,b));
+      return true;
+    }
+    var prev = "start";
+    for(var i=0;i<toks.length;i++){
+      var t = toks[i];
+      if(/^[\d.]/.test(t)){ out.push(parseFloat(t)); prev = "num"; }
+      else if(t === "("){ ops.push(t); prev = "op"; }
+      else if(t === ")"){
+        while(ops.length && ops[ops.length-1] !== "("){ if(!apply()) return null; }
+        ops.pop(); prev = "num";
+      } else {
+        if(t === "-" && (prev === "start" || prev === "op")){ ops.push("u-"); continue; }
+        while(ops.length && prec[ops[ops.length-1]] >= prec[t]){ if(!apply()) return null; }
+        ops.push(t); prev = "op";
+      }
+    }
+    while(ops.length){ if(!apply()) return null; }
+    if(out.length !== 1 || !isFinite(out[0])) return null;
+    return out[0];
+  }
+  function tryMath(text){
+    var pct = text.match(/(\d+(?:\.\d+)?)\s*(?:%|percent)\s*of\s*(\d+(?:\.\d+)?)/i);
+    if(pct){
+      var pv = parseFloat(pct[1]) * parseFloat(pct[2]) / 100;
+      return {label:"Calculator", html:"**"+pct[1]+"% of "+pct[2]+"** = **"+fmtNum(pv)+"**"};
+    }
+    var m = text.match(/(\d+(?:\.\d+)?\s*(?:[+\-*/%^]\s*\d+(?:\.\d+)?\s*)+)/);
+    if(!m) return null;
+    var expr = m[1].trim();
+    var v = evalExpr(expr);
+    if(v === null) return null;
+    return {label:"Calculator", html:"**"+expr.replace(/\s+/g,"")+"** = **"+fmtNum(v)+"**\n\nWorked out in the page by a small arithmetic parser — no model call."};
+  }
+
+  /* --- units --- */
+  var UNITS = {
+    len:{m:{f:1}, km:{f:1000}, cm:{f:0.01}, mm:{f:0.001}, mi:{f:1609.344}, ft:{f:0.3048}, in:{f:0.0254}, yd:{f:0.9144}},
+    mass:{kg:{f:1}, g:{f:0.001}, mg:{f:0.000001}, lb:{f:0.45359237}, oz:{f:0.028349523125}, t:{f:1000}},
+    data:{b:{f:1}, kb:{f:1024}, mb:{f:1048576}, gb:{f:1073741824}, tb:{f:1099511627776}}
+  };
+  var UALIAS = {metre:"m",metres:"m",meter:"m",meters:"m",kilometre:"km",kilometres:"km",kilometer:"km",kilometers:"km",mile:"mi",miles:"mi",foot:"ft",feet:"ft",inch:"in",inches:"in",yard:"yd",yards:"yd",kilogram:"kg",kilograms:"kg",kilo:"kg",kilos:"kg",gram:"g",grams:"g",pound:"lb",pounds:"lb",lbs:"lb",ounce:"oz",ounces:"oz",tonne:"t",tonnes:"t",byte:"b",bytes:"b",kilobyte:"kb",kilobytes:"kb",megabyte:"mb",megabytes:"mb",gigabyte:"gb",gigabytes:"gb",terabyte:"tb",terabytes:"tb"};
+  function normUnit(u){
+    u = u.toLowerCase().replace(/[°.]/g,"").trim();
+    if(u === "c" || u === "celsius" || u === "centigrade") return "c";
+    if(u === "f" || u === "fahrenheit") return "f";
+    if(u === "k" || u === "kelvin") return "k";
+    return UALIAS[u] || u;
+  }
+  function dimOf(u){
+    for(var k in UNITS){ if(UNITS[k][u]) return k; }
+    return null;
+  }
+  function tryUnits(text){
+    var l = text.toLowerCase();
+    if(/(rupee|rupees|inr|₹|lakh|crore)/.test(l) && /\d/.test(l)){
+      var cr = l.match(/(\d+(?:\.\d+)?)\s*crore/);
+      var lk = l.match(/(\d+(?:\.\d+)?)\s*lakh/);
+      var num = cr ? parseFloat(cr[1]) * 10000000 : lk ? parseFloat(lk[1]) * 100000 : parseFloat((l.match(/\d+(?:\.\d+)?/) || [0])[0]);
+      if(num){
+        var inr = new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(num);
+        var words = num >= 10000000 ? fmtNum(num/10000000)+" crore" : num >= 100000 ? fmtNum(num/100000)+" lakh" : fmtNum(num);
+        return {label:"Unit converter", html:"**"+inr+"** — that's "+words+", written the Indian way (lakh / crore grouping)."};
+      }
+    }
+    var m = l.match(/(-?\d+(?:\.\d+)?)\s*(?:degrees?\s*)?([a-z°]+)\s+(?:to|in|into|as|=)\s+(?:degrees?\s*)?([a-z°]+)/);
+    if(!m) return null;
+    var val = parseFloat(m[1]), a = normUnit(m[2]), b = normUnit(m[3]);
+    if(a === b) return null;
+    var tset = {c:1,f:1,k:1};
+    if(tset[a] && tset[b]){
+      var c = a === "c" ? val : a === "f" ? (val-32)*5/9 : val-273.15;
+      var res2 = b === "c" ? c : b === "f" ? c*9/5+32 : c+273.15;
+      return {label:"Unit converter", html:"**"+fmtNum(val)+"°"+a.toUpperCase()+"** = **"+fmtNum(res2)+"°"+b.toUpperCase()+"**"};
+    }
+    var da = dimOf(a), db = dimOf(b);
+    if(!da || da !== db) return null;
+    var base = val * UNITS[da][a].f;
+    return {label:"Unit converter", html:"**"+fmtNum(val)+" "+a+"** = **"+fmtNum(base / UNITS[db][b].f)+" "+b+"**"};
+  }
+
+  /* --- dates --- */
+  function istParts(d){
+    var f = new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",weekday:"long",day:"2-digit",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false});
+    var o = {};
+    f.formatToParts(d).forEach(function(x){ o[x.type] = x.value; });
+    return o;
+  }
+  function tryDates(text){
+    var l = text.toLowerCase();
+    var now = new Date();
+    var p = istParts(now);
+    var arith = l.match(/(\d+)\s*(day|days|week|weeks|month|months)\s*(from now|from today|later|after|ahead)/);
+    if(arith){
+      var n = parseInt(arith[1],10), unit = arith[2], d = new Date(now.getTime());
+      if(unit.indexOf("day") === 0) d.setDate(d.getDate() + n);
+      else if(unit.indexOf("week") === 0) d.setDate(d.getDate() + n*7);
+      else d.setMonth(d.getMonth() + n);
+      var q = istParts(d);
+      return {label:"Dates & time", html:"**"+n+" "+unit+" from today** is **"+q.weekday+", "+q.day+" "+q.month+" "+q.year+"**."};
+    }
+    if(/\b(today|what.*date|date is it|which date)\b/.test(l)){
+      return {label:"Dates & time", html:"Today is **"+p.weekday+", "+p.day+" "+p.month+" "+p.year+"** (IST)."};
+    }
+    if(/\b(time is it|current time|what.*time now|time now)\b/.test(l)){
+      return {label:"Dates & time", html:"It's **"+p.hour+":"+p.minute+"** in India (IST, UTC+5:30)."};
+    }
+    return null;
+  }
+
+  /* --- snippets --- */
+  function snippetFor(l){
+    if(!/(snippet|code|python|javascript|quickstart|sdk)/.test(l)) return null;
+    var id = /(speech|voice|audio|tts|speak)/.test(l) ? "tts" : "api";
+    var e = null;
+    KB.forEach(function(x){ if(x.id === id) e = x; });
+    return e ? {label:"Code snippets", html:e.a} : null;
+  }
+
+  /* --- local knowledge: chunking + retrieval --- */
+  var STOP = "a an the and or of to in on for with is are was were be been being it this that these those how what why when which who whom do does did can could should would i you we they my your our as at by from not no yes about into over under than then there here also very just so if but source sources document documents doc docs note notes file files say says said according mention mentions tell give please".split(" ");
+  function tokenize(text){
+    var m = text.toLowerCase().match(/[\p{L}\p{N}]+/gu) || [];
+    var out = [];
+    for(var i=0;i<m.length;i++){
+      var w = m[i];
+      if(w.length < 3 || STOP.indexOf(w) > -1) continue;
+      out.push(w);
+    }
+    return out;
+  }
+  function chunkText(text){
+    var clean = String(text).replace(/\r/g,"").replace(/[ \t]+/g," ").replace(/\n{3,}/g,"\n\n").trim();
+    var paras = clean.split(/\n{2,}/), chunks = [], buf = "";
+    paras.forEach(function(p){
+      p = p.trim();
+      if(!p) return;
+      if(p.length > 900){
+        var sents = p.match(/[^.!?।]+[.!?।]?/g) || [p];
+        sents.forEach(function(sn){
+          if(buf && (buf + " " + sn).length > 700){ chunks.push(buf.trim()); buf = ""; }
+          buf += " " + sn;
+        });
+      } else {
+        if(buf && (buf + "\n\n" + p).length > 700){ chunks.push(buf.trim()); buf = ""; }
+        buf += "\n\n" + p;
+      }
+    });
+    if(buf.trim()) chunks.push(buf.trim());
+    return chunks.filter(function(c){ return c.length > 40; });
+  }
+  function reindex(done){
+    var items = [];
+    state.sources.forEach(function(src){
+      chunkText(src.text).forEach(function(c){
+        items.push({src:src.id, title:src.title, text:c});
+      });
+    });
+    state.index = [];
+    var total = items.length;
+    state.indexing = true;
+    if(!total){
+      state.indexing = false;
+      setSync("No sources yet — add one, or load the examples.", 0);
+      renderSources();
+      if(done) done();
+      return;
+    }
+    var pos = 0;
+    setSync("Indexing " + total + " chunks in the background…", 0);
+    (function step(){
+      var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+      function clock(){ return (window.performance && performance.now) ? performance.now() : Date.now(); }
+      while(pos < total && (clock() - t0) < 10){
+        var it = items[pos++];
+        it.tokens = tokenize(it.text);
+        state.index.push(it);
+      }
+      setSync("Indexing " + pos + " / " + total + " chunks…", Math.round(pos/total*100));
+      if(pos < total){ setTimeout(step, 0); }
+      else {
+        state.indexing = false;
+        setSync("Index ready — " + state.index.length + " chunks from " + state.sources.length + " source(s).", 100);
+        renderSources();
+        if(done) done();
+      }
+    })();
+  }
+  function retrieve(q){
+    if(!state.index.length) return null;
+    var qt = tokenize(q);
+    if(!qt.length) return null;
+    var df = {}, N = state.index.length;
+    state.index.forEach(function(c){
+      var seen = {};
+      c.tokens.forEach(function(t){ if(!seen[t]){ seen[t] = 1; df[t] = (df[t] || 0) + 1; } });
+    });
+    var scored = [];
+    state.index.forEach(function(c){
+      var tf = {};
+      c.tokens.forEach(function(t){ tf[t] = (tf[t] || 0) + 1; });
+      var sc = 0;
+      qt.forEach(function(t){ if(tf[t]) sc += (1 + Math.log(tf[t])) * Math.log(1 + N/(1 + (df[t] || 1))); });
+      if(sc > 0) scored.push({c:c, s:sc});
+    });
+    if(!scored.length) return null;
+    scored.sort(function(a,b){ return b.s - a.s; });
+    if(scored[0].s < Math.max(0.75, qt.length * 0.35)) return null;
+    return {best:scored[0].c, others:scored.slice(1,3)};
+  }
+  function trimChunk(t, max){
+    if(t.length <= max) return t;
+    var cut = t.slice(0, max);
+    var stop = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("। "), cut.lastIndexOf("\n"));
+    if(stop > max * 0.5) cut = cut.slice(0, stop+1);
+    return cut.trim() + " …";
+  }
+  function excerpt(text, q, max){
+    var t = String(text).replace(/\s+/g, " ").trim();
+    var lower = t.toLowerCase();
+    var toks = tokenize(q), hit = -1;
+    for(var i=0;i<toks.length;i++){
+      var idx = lower.indexOf(toks[i]);
+      if(idx > -1 && (hit === -1 || idx < hit)) hit = idx;
+    }
+    var start = hit > 160 ? hit - 140 : 0;
+    var cut = t.slice(start, start + max);
+    if(start > 0) cut = "… " + cut;
+    if(start + max < t.length) cut = cut + " …";
+    return cut;
+  }
+  function answerFromSources(text){
+    var r = retrieve(text);
+    if(!r) return null;
+    var bodyText = r.best.text;
+    var firstLine = bodyText.split("\n")[0].trim();
+    if(firstLine && r.best.title.toLowerCase().indexOf(firstLine.toLowerCase().slice(0, 18)) > -1){
+      bodyText = bodyText.slice(firstLine.length).trim();
+    }
+    var html = "From your sources — **" + esc(r.best.title) + "**:\n\n" + excerpt(bodyText, text, 520);
+    var names = [];
+    r.others.forEach(function(o){ if(names.indexOf(o.c.title) === -1) names.push(o.c.title); });
+    if(names.length) html += "\n\nAlso matched: " + names.map(esc).join(", ") + ".";
+    return {label:"Your sources", html:html};
+  }
+
+  /* --- sources store --- */
+  var STORE_KEY = "infinity.chat.v1";
+  function saveStore(){
+    try{
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        skills: state.skills,
+        sources: state.sources.map(function(s){ return {id:s.id, kind:s.kind, title:s.title, text:s.text}; })
+      }));
+    }catch(e){ /* private mode, file:// — the session still works */ }
+  }
+  function loadStore(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return false;
+      var o = JSON.parse(raw);
+      if(o.skills) Object.keys(o.skills).forEach(function(k){ if(k in state.skills) state.skills[k] = !!o.skills[k]; });
+      if(o.sources && o.sources.length) state.sources = o.sources;
+      return true;
+    }catch(e){ return false; }
+  }
+  function addSource(kind, title, text){
+    if(!text || text.trim().length < 40){ toast("That source is too short to index"); return; }
+    var src = {id:"s" + Date.now().toString(36) + Math.random().toString(36).slice(2,5), kind:kind, title:(title || "Untitled").slice(0,70), text:text, added:Date.now()};
+    state.sources.unshift(src);
+    saveStore();
+    renderSources();
+    reindex();
+    toast("Added “" + src.title + "”");
+  }
+  function removeSource(id){
+    state.sources = state.sources.filter(function(s){ return s.id !== id; });
+    saveStore();
+    renderSources();
+    reindex();
+  }
+  function seedExamples(silent){
+    var a = "How this chat works\n\nTechnova AI chat runs entirely in your browser. There is no API key, no server and no model call. Answers come from a set of skills that you control in the Skills panel: a calculator, a unit converter, date arithmetic, code snippets, language detection and these local sources.\n\nSources are split into chunks of roughly seven hundred characters, tokenised and scored with a keyword weighting that rewards rare words. That index is rebuilt in the background whenever you add, remove or re-index a source. Everything is stored in this browser only.\n\nA web page cannot crawl the open internet on its own. Browsers block cross-origin requests unless the site allows them, so adding a URL only works for pages that send permissive CORS headers. Pasting text always works.";
+    var b = "Voice agents — sample brief\n\nA voice agent answers a phone call in the caller's own language. The loop is describe the job, test it, take a number, go live. The runtime handles barge-in, long silences, voicemail detection and a caller switching languages mid-sentence.\n\nPricing is per minute. Pay as you go starts at three rupees fifty a minute and falls to three rupees on the business plan, with committed volume priced separately. Telephony is included when you rent an Indian number.\n\nRecording and transcript data stay in India, and every agent action is logged for audit.";
+    [["How this chat works", a], ["Voice agents — sample brief", b]].forEach(function(pair){
+      state.sources.push({id:"s" + Math.random().toString(36).slice(2,9), kind:"example", title:pair[0], text:pair[1], added:Date.now()});
+    });
+    saveStore();
+    renderSources();
+    reindex();
+    if(!silent) toast("Loaded two example sources");
+  }
+
+  /* --- speech --- */
+  var VOICE_LANG = {en:"en-IN",hi:"hi-IN",ta:"ta-IN",te:"te-IN",bn:"bn-IN",kn:"kn-IN",ml:"ml-IN",mr:"mr-IN",gu:"gu-IN",pa:"pa-IN"};
+  function stripMd(t){
+    return String(t)
+      .replace(/```[\s\S]*?```/g," code block. ")
+      .replace(/[*_`#>]/g,"")
+      .replace(/\s+/g," ")
+      .trim();
+  }
+  function speakReply(text){
+    if(!("speechSynthesis" in window)){ toast("This browser has no speech engine"); return; }
+    try{
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(stripMd(text).slice(0,700));
+      u.lang = VOICE_LANG[state.lang] || "en-IN";
+      u.rate = 1;
+      window.speechSynthesis.speak(u);
+    }catch(e){ toast("Could not start speech"); }
+  }
+
+  /* --- router --- */
+  function skillsOverview(){
+    var on = SKILLS.filter(function(s){ return state.skills[s.id]; });
+    return {label:"Skills", html:"**Enabled skills** — " + on.length + " of " + SKILLS.length + ":\n\n" +
+      on.map(function(s){ return "- **" + s.name + "** — " + s.desc; }).join("\n") +
+      "\n\nAll of it runs inside this page: no API key, no server, no model call. Toggle them under **Skills** in the top bar, and add documents under **Sources**."};
+  }
+  function runSkills(text){
+    var l = text.toLowerCase().trim();
+    if(!l) return null;
+    if(/(what skills|which skills|your skills|capabilities|what can you do|list skills)/.test(l)) return skillsOverview();
+    if(state.skills.math){ var m = tryMath(text); if(m) return m; }
+    if(state.skills.units){ var u = tryUnits(text); if(u) return u; }
+    if(state.skills.dates){ var d = tryDates(text); if(d) return d; }
+    if(state.skills.knowledge){ var k = answerFromSources(text); if(k) return k; }
+    if(state.skills.snippets){ var sn = snippetFor(l); if(sn) return sn; }
+    if(state.skills.product){ var pr = productAnswer(text); if(pr) return {label:"Product knowledge", html:pr}; }
+    return null;
+  }
+
+  /* ---------------- chat store ---------------- */
+  function newChat(select){
+    state.runId++;
+    var chat = {id:Date.now()+"-"+Math.random().toString(36).slice(2,6), title:"New chat", msgs:[]};
+    state.chats.unshift(chat);
+    state.active = chat.id;
+    if(select !== false){ render(); }
+    return chat;
+  }
+  function current(){
+    for(var i=0;i<state.chats.length;i++) if(state.chats[i].id === state.active) return state.chats[i];
+    return null;
+  }
+  function saveMsg(role, html, plain){
+    var c = current(); if(!c) c = newChat(false);
+    c.msgs.push({role:role, html:html, plain:plain||""});
+    if(c.title === "New chat" && role === "user"){
+      c.title = plain.length > 42 ? plain.slice(0,42).trim()+"…" : plain;
+      $("chatTitle").textContent = c.title;
+    }
+    renderChatList();
+  }
+
+  /* ---------------- rendering ---------------- */
+  function renderChatList(){
+    var q = ($("chatSearch") && $("chatSearch").value || "").trim().toLowerCase();
+    var list = $("chatList");
+    var shown = state.chats.filter(function(c){
+      if(!q) return true;
+      if(c.title.toLowerCase().indexOf(q) > -1) return true;
+      return c.msgs.some(function(m){ return (m.plain || "").toLowerCase().indexOf(q) > -1; });
+    });
+    list.innerHTML = shown.map(function(c){
+      var active = c.id === state.active ? ' aria-current="true"' : "";
+      return '<button class="chat-item"'+active+' data-id="'+c.id+'">'+esc(c.title)+"</button>";
+    }).join("") || '<div class="msgcount">No chats match that.</div>';
+    var count = $("chatCount");
+    if(count) count.textContent = q ? shown.length + " of " + state.chats.length : "";
+  }
+
+  function helloHTML(){
+    var L = LANGS[state.lang];
+    var sub = state.lang === "en" ? "" : '<p class="hello__sub">' + L.hello + '</p>';
+    return '<div class="hello">'+
+      '<h1>What can I help with?</h1>'+
+      sub+
+      '<div class="hello__chips">'+
+        '<button data-ask="What models does Technova AI offer?">Models</button>'+
+        '<button data-ask="How much do voice agents cost per minute?">Voice agent pricing</button>'+
+        '<button data-ask="Show me the text to speech quickstart">Text to speech code</button>'+
+        '<button data-ask="what skills do you have">What can you do?</button>'+
+        '<button data-ask="convert 10 km to miles">10 km to miles</button>'+
+        '<button data-ask="30 days from today">30 days from today</button>'+
+        '<button data-ask="what do my sources say about pricing">Ask my sources</button>'+
+      '</div></div>';
+  }
+
+  function render(){
+    var c = current();
+    $("chatTitle").textContent = c ? c.title : "New chat";
+    if(!c || !c.msgs.length){
+      thread.classList.add("thread--empty");
+      threadIn.innerHTML = helloHTML();
+      return;
+    }
+    thread.classList.remove("thread--empty");
+    threadIn.innerHTML = c.msgs.map(function(m){
+      if(m.role === "user") return '<div class="msg msg--user"><div class="msg__bubble">'+inline(m.plain).replace(/\n/g,"<br>")+'</div></div>';
+      return '<div class="msg msg--bot"><div class="msg__avatar"></div><div class="msg__body">'+m.html+'</div></div>';
+    }).join("");
+    scrollDown();
+  }
+
+  function scrollDown(){
+    requestAnimationFrame(function(){ thread.scrollTop = thread.scrollHeight; });
+  }
+
+  /* ---------------- send ---------------- */
+  function setBusy(v){
+    state.busy = v;
+    sendBtn.disabled = v || !input.value.trim();
+    sendBtn.hidden = !!v;
+    $("stop").hidden = !v;
+    $("status").textContent = v ? "Generating…" : "Technova AI can make mistakes. Check important info.";
+  }
+
+  function pushUser(text){
+    var html = '<div class="msg msg--user"><div class="msg__bubble">'+inline(text).replace(/\n/g,"<br>")+'</div></div>';
+    saveMsg("user", html, text);
+    if(threadIn.querySelector(".hello")) threadIn.innerHTML = "";
+    threadIn.insertAdjacentHTML("beforeend", html);
+    scrollDown();
+  }
+
+  function botShell(){
+    var el = document.createElement("div");
+    el.className = "msg msg--bot";
+    el.innerHTML = '<div class="msg__avatar"></div><div class="msg__body"><span class="typing"><i></i><i></i><i></i></span></div>';
+    threadIn.appendChild(el);
+    scrollDown();
+    return el.querySelector(".msg__body");
+  }
+
+  function streamInto(body, md, done, label, runId){
+    var segs = segments(md);
+    var i = 0, rendered = "";   // committed, already-safe HTML
+
+    function nextSegment(){
+      if(i >= segs.length){ finish(); return; }
+      var seg = segs[i++];
+      if(seg.type === "code"){
+        rendered += codeHTML(seg);
+        body.innerHTML = rendered;
+        scrollDown();
+        setTimeout(nextSegment, 110);
+        return;
+      }
+      var words = seg.body.split(/(\s+)/);
+      var w = 0, pending = "";
+      function tick(){
+        if(runId && runId !== state.runId){ setBusy(false); return; }
+        var chunk = "", n = 0;
+        while(w < words.length && n < 3){ chunk += words[w++]; n++; }
+        pending += chunk;
+        body.innerHTML = rendered + renderTextBlock(pending) + '<span class="typing"><i></i></span>';
+        scrollDown();
+        if(w < words.length){ setTimeout(tick, 26); }
+        else { rendered += renderTextBlock(pending); setTimeout(nextSegment, 70); }
+      }
+      tick();
+    }
+    function finish(){
+      if(runId && runId !== state.runId){ setBusy(false); return; }
+      endThink(body, "Answered");
+      body.innerHTML = rendered;
+      body.insertAdjacentHTML("beforeend",
+        '<div class="msg__meta"><span>'+esc(label || "Assistant")+'</span><span class="dot"></span>'+
+        '<span>'+esc(state.model)+'</span><span class="dot"></span>'+
+        '<button type="button" data-copy-msg>Copy</button><span class="dot"></span>'+
+        '<button type="button" data-speak>Speak</button><span class="dot"></span>'+
+        '<button type="button" data-again>Regenerate</button></div>');
+      if(state.skills.voice) speakReply(md);
+      saveMsg("bot", body.innerHTML, "");
+      renderChatList();
+      setBusy(false);
+      scrollDown();
+      if(done) done();
+    }
+    nextSegment();
+  }
+
+  function ask(text){
+    if(state.busy) return;
+    var t = (text !== undefined ? text : input.value).trim();
+    if(!t) return;
+    input.value = "";
+    autoGrow();
+    setBusy(true);
+
+    state.runId++;
+    var runId = state.runId;
+
+    pushUser(t);
+    var body = botShell();
+
+    var t0 = Date.now();
+    body.__think = {t0: t0, block: null, timer: setTimeout(function(){
+      body.__think.block = thinkBlock(body, "Thinking…");
+      body.__think.block.step("Read your message");
+    }, 110)};
+
+    var note = scriptNote(t);
+    var res = runSkills(t);
+    var label = res ? res.label : "Assistant";
+    var localHtml = res ? res.html : FALLBACKS[Math.floor(Math.random()*FALLBACKS.length)];
+    if(note && state.skills.lang){
+      localHtml = "Note — I can see " + note + " in your message. On the full platform Vaani and Shruti handle that script natively; this demo replies in English.\n\n" + localHtml;
+    }
+
+    /* deterministic skills answer instantly and exactly — never send those to the network */
+    var instant = res && /^(Calculator|Unit converter|Dates & time|Your sources|Skills)$/.test(res.label);
+    if(instant || !apiConfig()){
+      startStream(body, localHtml, label, runId, body.__think.block);
+      return;
+    }
+
+    callLive(t, body, runId, function(err){
+      if(runId !== state.runId) return;
+      var html = "**Live model unavailable** (" + esc(err) + ") — answering from the local skills instead.\n\n" + localHtml;
+      startStream(body, html, label, runId, body.__think.block);
+    }, body.__think.block);
+  }
+
+  function endThink(body, note){
+    var ti = body && body.__think;
+    if(!ti) return;
+    clearTimeout(ti.timer);
+    if(ti.block) ti.block.done(Date.now() - ti.t0, note);
+    body.__think = null;
+  }
+
+  /* ---------------- thinking ---------------- */
+  function thinkBlock(body, title){
+    var el = document.createElement("div");
+    el.className = "think";
+    el.setAttribute("data-open", "true");
+    el.innerHTML = '<button class="think__head" type="button"><span class="spin"></span>' +
+      '<span class="think__title">' + esc(title || "Thinking…") + '</span>' +
+      '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>' +
+      '<div class="think__body"></div>';
+    body.parentNode.insertBefore(el, body);
+    body.parentNode.classList.add("has-think");
+    var bodyEl = el.querySelector(".think__body");
+    var steps = 0, rawEl = null;
+    return {
+      el: el,
+      step: function(txt){
+        steps++;
+        var d = document.createElement("div");
+        d.innerHTML = '<em>›</em><span>' + esc(txt) + '</span>';
+        bodyEl.appendChild(d);
+        scrollDown();
+      },
+      raw: function(txt){
+        if(!rawEl){ rawEl = document.createElement("div"); rawEl.className = "think__raw"; bodyEl.appendChild(rawEl); }
+        rawEl.textContent = txt.length > 1200 ? "…" + txt.slice(-1200) : txt;
+      },
+      done: function(ms, note){
+        el.classList.add("done");
+        el.querySelector(".think__title").textContent =
+          (note || "Thought") + " for " + (ms/1000).toFixed(1) + "s · " + steps + " step" + (steps === 1 ? "" : "s");
+        el.setAttribute("data-open", "false");
+      }
+    };
+  }
+
+  function msgText(html){
+    var d = document.createElement("div");
+    d.innerHTML = html;
+    Array.prototype.forEach.call(d.querySelectorAll(".msg__meta,.think"), function(n){ n.remove(); });
+    return (d.innerText || d.textContent || "").trim();
+  }
+
+  function download(name, text, mime){
+    try{
+      var blob = new Blob([text], {type: mime || "text/plain"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+    }catch(e){ toast("Download failed in this browser"); }
+  }
+
+  /* ---------------- live model (optional) ---------------- */
+  var SYSTEM_PROMPT = "You are Technova AI, a helpful assistant. Answer in the user's language. Be accurate and concise: a few sentences, or a short list when steps are involved. If you are unsure, say so.";
+  var API_STORE = "infinity.api";
+
+  function apiConfig(){
+    var a = state.api;
+    if(!a) return null;
+    var useProxy = a.proxy && a.proxyOk;
+    var key = (a.key || "").trim();
+    if(!useProxy && !key) return null;
+    return {
+      url: useProxy ? "/api/chat" : (a.endpoint || "https://integrate.api.nvidia.com/v1/chat/completions"),
+      key: useProxy ? "" : key,
+      model: a.models[state.model] || a.models["Technova 1.0 Flash"],
+      proxy: useProxy
+    };
+  }
+
+  function saveApi(){
+    try{
+      localStorage.setItem(API_STORE, JSON.stringify({
+        key: state.api.key, endpoint: state.api.endpoint, proxy: state.api.proxy, models: state.api.models
+      }));
+    }catch(e){}
+  }
+  function loadApi(){
+    try{
+      var raw = localStorage.getItem(API_STORE);
+      if(!raw) return;
+      var o = JSON.parse(raw);
+      if(typeof o.key === "string") state.api.key = o.key;
+      if(o.endpoint) state.api.endpoint = o.endpoint;
+      if(typeof o.proxy === "boolean") state.api.proxy = o.proxy;
+      if(o.models) Object.keys(o.models).forEach(function(k){ if(k in state.api.models) state.api.models[k] = o.models[k]; });
+    }catch(e){}
+  }
+
+  function apiStatus(){
+    var cfg = apiConfig();
+    var el = $("apiStat"), txt = $("apiStatText");
+    if(!el) return;
+    el.classList.remove("on","warn");
+    if(cfg){
+      el.classList.add("on");
+      txt.textContent = "Live model on — " + cfg.model + (cfg.proxy ? " via server proxy" : " with your browser key") + ".";
+    } else if(state.api.proxy && !state.api.proxyOk){
+      el.classList.add("warn");
+      txt.textContent = "Proxy selected but /api/chat isn't answering — deploy api/chat.js, or turn the proxy off and use a key.";
+    } else {
+      txt.textContent = "Local mode — answers come from the built-in skills.";
+    }
+  }
+
+  function renderLive(body, text, runId){
+    if(runId !== state.runId) return;
+    body.innerHTML = renderTextBlock(text) + '<span class="typing"><i></i></span>';
+    scrollDown();
+  }
+
+  function finishLive(body, text, runId){
+    if(runId !== state.runId){ setBusy(false); return; }
+    endThink(body, "Thought");
+    body.innerHTML = renderTextBlock(text);
+    body.insertAdjacentHTML("beforeend",
+      '<div class="msg__meta"><span>' + esc(state.model) + '</span><span class="dot"></span>' +
+      '<button type="button" data-copy-msg>Copy</button><span class="dot"></span>' +
+      '<button type="button" data-speak>Speak</button><span class="dot"></span>' +
+      '<button type="button" data-again>Regenerate</button></div>');
+    saveMsg("bot", body.innerHTML, "");
+    renderChatList();
+    setBusy(false);
+    scrollDown();
+    if(state.skills.voice) speakReply(text);
+  }
+
+  function callLive(prompt, body, runId, onError, think){
+    var cfg = apiConfig();
+    if(!cfg){ onError("no key configured"); return; }
+    var payload = {
+      model: cfg.model,
+      messages: [{role:"system", content:SYSTEM_PROMPT}, {role:"user", content:prompt}],
+      temperature: 0.5,
+      max_tokens: 600,
+      stream: true
+    };
+    var headers = {"Content-Type":"application/json"};
+    if(cfg.key) headers["Authorization"] = "Bearer " + cfg.key;
+    if(think) think.step("Calling " + cfg.model + (cfg.proxy ? " through the server proxy" : ""));
+
+    var ctrl = ("AbortController" in window) ? new AbortController() : null;
+    var timer = setTimeout(function(){ if(ctrl) ctrl.abort(); }, 25000);
+
+    fetch(cfg.url, {method:"POST", headers:headers, body:JSON.stringify(payload), signal: ctrl ? ctrl.signal : undefined})
+      .then(function(res){
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        var ct = (res.headers.get("content-type") || "");
+        if(ct.indexOf("text/event-stream") === -1){
+          return res.json().then(function(j){
+            var msg = j && j.choices && j.choices[0] && j.choices[0].message;
+            if(think && msg && msg.reasoning_content) think.raw(msg.reasoning_content);
+            var txt = (msg && msg.content) || (j && j.choices && j.choices[0] && j.choices[0].text) || "";
+            if(!txt) throw new Error("empty response");
+            if(think) think.step("Received " + txt.length + " characters");
+            renderLive(body, txt, runId);
+            finishLive(body, txt, runId);
+          });
+        }
+        if(!res.body || !res.body.getReader) throw new Error("no stream support");
+        var reader = res.body.getReader(), dec = new TextDecoder(), acc = "", buf = "", last = 0, reasoning = "";
+        function pump(){
+          return reader.read().then(function(r){
+            if(r.done){
+              if(!acc) throw new Error("no content");
+              finishLive(body, acc, runId);
+              return;
+            }
+            if(runId !== state.runId){ try{ reader.cancel(); }catch(e){} return; }
+            buf += dec.decode(r.value, {stream:true});
+            var lines = buf.split("\n");
+            buf = lines.pop();
+            for(var i=0;i<lines.length;i++){
+              var line = lines[i].trim();
+              if(line.indexOf("data:") !== 0) continue;
+              var data = line.slice(5).trim();
+              if(!data || data === "[DONE]") continue;
+              try{
+                var j = JSON.parse(data);
+                var d = j.choices && j.choices[0] && (j.choices[0].delta || j.choices[0].message);
+                if(d && d.reasoning_content && think) think.raw((reasoning += d.reasoning_content));
+                if(d && d.content){
+                  if(!acc && think) think.step("Streaming the reply");
+                  acc += d.content;
+                }
+              }catch(e){}
+            }
+            var now = Date.now();
+            if(acc && now - last > 70){ last = now; renderLive(body, acc, runId); }
+            return pump();
+          });
+        }
+        return pump();
+      })
+      .catch(function(e){
+        clearTimeout(timer);
+        onError(e && e.name === "AbortError" ? "timed out" : (e.message || "network error"));
+      })
+      .then(function(){ clearTimeout(timer); });
+  }
+
+  function startStream(body, md, label, runId, think){
+    setTimeout(function(){
+      if(runId !== state.runId){ setBusy(false); return; }
+      if(think) think.step("Answer from the " + label + " skill");
+      body.innerHTML = "";
+      streamInto(body, md, null, label, runId);
+    }, 90);
+  }
+
+  /* ---------------- composer ---------------- */
+  function autoGrow(){
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 160) + "px";
+  }
+  input.addEventListener("input", function(){
+    autoGrow();
+    sendBtn.disabled = state.busy || !input.value.trim();
+  });
+  input.addEventListener("keydown", function(e){
+    if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); ask(); }
+  });
+  sendBtn.addEventListener("click", function(){ ask(); });
+
+  /* ---------------- events ---------------- */
+  document.addEventListener("click", function(e){
+    var askBtn = e.target.closest("[data-ask]");
+    if(askBtn){ ask(askBtn.getAttribute("data-ask")); return; }
+
+    var chatBtn = e.target.closest(".chat-item");
+    if(chatBtn){ state.runId++; setBusy(false); state.active = chatBtn.getAttribute("data-id"); render(); renderChatList(); closeSide(); return; }
+
+    var thinkHead = e.target.closest(".think__head");
+    if(thinkHead){
+      var tbox = thinkHead.closest(".think");
+      tbox.setAttribute("data-open", tbox.getAttribute("data-open") === "true" ? "false" : "true");
+      return;
+    }
+
+    var copyMsg = e.target.closest("[data-copy-msg]");
+    if(copyMsg){
+      var mb2 = copyMsg.closest(".msg__body");
+      var txt2 = mb2 ? msgText(mb2.innerHTML) : "";
+      if(navigator.clipboard){ navigator.clipboard.writeText(txt2).then(function(){ toast("Copied"); }); }
+      else { toast("Copy not available"); }
+      return;
+    }
+
+    var spkBtn = e.target.closest("[data-speak]");
+    if(spkBtn){
+      var mb = spkBtn.closest(".msg__body");
+      speakReply(mb ? mb.innerText : "");
+      return;
+    }
+
+    var copyBtn = e.target.closest("[data-copy]");
+    if(copyBtn){
+      var pre = copyBtn.closest(".code").querySelector("pre");
+      var txt = pre ? pre.innerText : "";
+      if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(function(){ toast("Copied"); }); }
+      else { toast("Copy not available"); }
+      return;
+    }
+
+    var again = e.target.closest("[data-again]");
+    if(again && !state.busy){
+      var c = current();
+      if(c && c.msgs.length){
+        var lastUser = null;
+        for(var i=c.msgs.length-1;i>=0;i--){ if(c.msgs[i].role === "user"){ lastUser = c.msgs[i].plain; break; } }
+        if(lastUser){ ask(lastUser); }
+      }
+      return;
+    }
+  });
+
+  $("newChat").addEventListener("click", function(){
+    newChat(); input.value=""; autoGrow(); setBusy(false); closeSide(); input.focus();
+  });
+
+  $("clearChat").addEventListener("click", function(){
+    state.runId++;
+    var c = current();
+    if(c){ c.msgs = []; c.title = "New chat"; }
+    setBusy(false);
+    render(); renderChatList(); toast("Chat cleared");
+  });
+
+  $("model").addEventListener("change", function(e){
+    state.model = e.target.value;
+    $("modelLabel").textContent = state.model;
+    $("modelMark").classList.toggle("pro", state.model === "Technova 1.5 Pro");
+    apiStatus();
+    toast("Model set to " + state.model);
+  });
+
+  $("lang").addEventListener("change", function(e){
+    state.lang = e.target.value;
+    input.placeholder = LANGS[state.lang].ph;
+    if(current() && current().msgs.length === 0) render();
+    toast("Reply language: " + LANGS[state.lang].name);
+  });
+
+  /* mic — simulated capture */
+  var mic = $("mic"), wave = $("wave"), recTimer = null;
+  var SAMPLES = [
+    "मुझे हिंदी में टेक्स्ट टू स्पीच चाहिए",
+    "வாய்ஸ் ஏஜென்ட் விலை என்ன?",
+    "voice agent pricing per minute cheppandi",
+    "బుల్బుల్ మోడల్ గురించి చెప్పండి"
+  ];
+  mic.addEventListener("click", function(){
+    if(recTimer){ return; }
+    mic.classList.add("rec"); wave.classList.add("on");
+    $("status").textContent = "Listening… (simulated)";
+    recTimer = setTimeout(function(){
+      mic.classList.remove("rec"); wave.classList.remove("on");
+      recTimer = null;
+      input.value = SAMPLES[Math.floor(Math.random()*SAMPLES.length)];
+      autoGrow();
+      sendBtn.disabled = false;
+      $("status").textContent = "Technova AI can make mistakes. Check important info.";
+      input.focus();
+      toast("Simulated transcription inserted");
+    }, 1700);
+  });
+
+  /* sidebar */
+  function openSide(){ $("side").classList.add("open"); $("scrim").classList.add("on"); }
+  function closeSide(){ $("side").classList.remove("open"); $("scrim").classList.remove("on"); }
+  $("burger").addEventListener("click", openSide);
+  $("scrim").addEventListener("click", closeSide);
+
+  /* toast */
+  var toastTimer = null;
+  function toast(msg){
+    var el = $("toast");
+    el.textContent = msg;
+    el.classList.add("on");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove("on"); }, 1700);
+  }
+
+  /* ---------------- skills & sources UI ---------------- */
+  function renderSkills(){
+    $("skillList").innerHTML = SKILLS.map(function(sk){
+      var on = !!state.skills[sk.id];
+      return '<div class="skill"><div class="skill__txt"><b>' + esc(sk.name) + '</b><p>' + esc(sk.desc) + '</p></div>' +
+             '<button class="sw" role="switch" aria-checked="' + on + '" data-skill="' + sk.id + '" aria-label="' + esc(sk.name) + '"></button></div>';
+    }).join("");
+  }
+  function renderSources(){
+    var host = $("srcList"), count = $("srcCount");
+    if(!state.sources.length){
+      host.innerHTML = '<p class="dnote" style="margin:0">Nothing indexed yet. Paste text above, or load the examples.</p>';
+      count.textContent = "";
+      return;
+    }
+    count.textContent = "· " + state.sources.length;
+    host.innerHTML = state.sources.map(function(src){
+      var chunks = chunkText(src.text).length;
+      var size = src.text.length > 1000 ? Math.round(src.text.length/1000) + "k" : src.text.length;
+      return '<div class="srcitem"><div class="srcitem__t"><b>' + esc(src.title) + '</b>' +
+             '<span>' + esc(src.kind) + ' · ' + chunks + ' chunk' + (chunks === 1 ? '' : 's') + ' · ' + size + ' chars</span></div>' +
+             '<button data-remove="' + src.id + '" aria-label="Remove source">&#10005;</button></div>';
+    }).join("");
+  }
+  function setSync(msg, pct){
+    var n = $("syncNote"), b = $("barFill");
+    if(n) n.textContent = msg;
+    if(b) b.style.width = Math.max(0, Math.min(100, pct || 0)) + "%";
+  }
+  function setTab(tab){
+    $("drawerTitle").textContent = tab === "sources" ? "Sources" : tab === "api" ? "API" : "Skills";
+    Array.prototype.forEach.call(document.querySelectorAll(".dtab"), function(b){
+      b.setAttribute("aria-selected", String(b.getAttribute("data-tab") === tab));
+    });
+    $("paneSkills").hidden = tab !== "skills";
+    $("paneSources").hidden = tab !== "sources";
+    $("paneApi").hidden = tab !== "api";
+  }
+  function openDrawer(tab){
+    $("drawer").classList.add("open");
+    $("dscrim").classList.add("on");
+    setTab(tab || "skills");
+    closeSide();
+  }
+  function closeDrawer(){
+    $("drawer").classList.remove("open");
+    $("dscrim").classList.remove("on");
+  }
+
+  function addUrl(url){
+    if(!url){ toast("Paste a URL first"); return; }
+    if(!/^https?:\/\//i.test(url)){ toast("Include http:// or https://"); return; }
+    setSync("Fetching " + url + " …", 15);
+    fetch(url, {mode:"cors"}).then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    }).then(function(txt){
+      var doc = new DOMParser().parseFromString(txt, "text/html");
+      Array.prototype.forEach.call(doc.querySelectorAll("script,style,noscript,svg,iframe,nav,footer"), function(n){ n.remove(); });
+      var text = ((doc.body && doc.body.textContent) || txt).replace(/\s+/g, " ").trim();
+      if(text.length < 200) throw new Error("not enough readable text");
+      var title = (doc.title || url).replace(/^https?:\/\//, "").slice(0, 60);
+      addSource("url", title, text);
+      $("srcUrl").value = "";
+    }).catch(function(err){
+      setSync("Couldn't fetch that page (" + err.message + "). Most sites refuse requests made from a browser page, so paste the text instead — retrieval works exactly the same.", 0);
+    });
+  }
+  function exportKnowledge(){
+    try{
+      var blob = new Blob([JSON.stringify({skills:state.skills, sources:state.sources}, null, 2)], {type:"application/json"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "infinity-knowledge.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+      toast("Exported knowledge");
+    }catch(e){ toast("Export failed in this browser"); }
+  }
+
+  /* ---------------- api settings UI ---------------- */
+  function fillApiInputs(){
+    $("apiKey").value = "";
+    $("apiKey").placeholder = state.api.key ? "key saved (••••" + state.api.key.slice(-4) + ") — type to replace" : "paste your key (stored locally)";
+    $("apiEndpoint").value = state.api.endpoint || "";
+    $("apiModelFlash").value = state.api.models["Technova 1.0 Flash"] || "";
+    $("apiModelPro").value = state.api.models["Technova 1.5 Pro"] || "";
+    $("apiProxy").checked = !!state.api.proxy;
+  }
+  function detectProxy(cb){
+    if(location.protocol !== "http:" && location.protocol !== "https:"){
+      state.api.proxyOk = false;
+      apiStatus();
+      if(cb) cb();
+      return;
+    }
+    fetch("/api/chat", {method:"GET"})
+      .then(function(r){ state.api.proxyOk = r.ok; })
+      .catch(function(){ state.api.proxyOk = false; })
+      .then(function(){ apiStatus(); if(cb) cb(); });
+  }
+
+  $("apiKeySave").addEventListener("click", function(){
+    var v = $("apiKey").value.trim();
+    if(!v){ toast("Paste a key first"); return; }
+    state.api.key = v;
+    saveApi(); fillApiInputs(); apiStatus();
+    toast("Key saved in this browser");
+  });
+  $("apiKeyClear").addEventListener("click", function(){
+    state.api.key = "";
+    saveApi(); fillApiInputs(); apiStatus();
+    $("apiOut").textContent = "";
+    toast("Key removed");
+  });
+  $("apiEndpoint").addEventListener("change", function(){
+    state.api.endpoint = this.value.trim() || "https://integrate.api.nvidia.com/v1/chat/completions";
+    saveApi();
+  });
+  $("apiModelFlash").addEventListener("change", function(){
+    state.api.models["Technova 1.0 Flash"] = this.value.trim() || "meta/llama-3.1-8b-instruct";
+    saveApi(); apiStatus();
+  });
+  $("apiModelPro").addEventListener("change", function(){
+    state.api.models["Technova 1.5 Pro"] = this.value.trim() || "meta/llama-3.3-70b-instruct";
+    saveApi(); apiStatus();
+  });
+  $("apiProxy").addEventListener("change", function(){
+    state.api.proxy = this.checked;
+    saveApi();
+    if(state.api.proxy){ detectProxy(function(){ toast(state.api.proxyOk ? "Proxy found at /api/chat" : "No proxy at /api/chat"); }); }
+    else { state.api.proxyOk = false; apiStatus(); }
+  });
+  $("apiTest").addEventListener("click", function(){
+    var out = $("apiOut");
+    var cfg = apiConfig();
+    if(!cfg){ out.textContent = "Nothing configured — add a key, or turn on the server proxy."; return; }
+    out.textContent = "Testing " + cfg.model + " …";
+    var headers = {"Content-Type":"application/json"};
+    if(cfg.key) headers["Authorization"] = "Bearer " + cfg.key;
+    if(think) think.step("Calling " + cfg.model + (cfg.proxy ? " through the server proxy" : ""));
+    fetch(cfg.url, {
+      method:"POST", headers:headers,
+      body: JSON.stringify({model: cfg.model, messages:[{role:"user", content:"Say OK"}], max_tokens: 8, stream: false})
+    }).then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function(j){
+      var txt = j && j.choices && j.choices[0] && ((j.choices[0].message && j.choices[0].message.content) || j.choices[0].text) || "";
+      out.textContent = txt ? "Working — model replied: " + txt.slice(0, 60) : "Reached the endpoint, but the reply had no content.";
+      apiStatus();
+    }).catch(function(e){
+      out.textContent = "Failed: " + (e.message || "network error") + ". Check the key, the endpoint, or CORS.";
+      apiStatus();
+    });
+  });
+
+  /* ---------------- search, export, copy, jump, stop ---------------- */
+  $("chatSearch").addEventListener("input", renderChatList);
+  $("chatSearch").addEventListener("keydown", function(e){
+    if(e.key === "Escape"){ this.value = ""; renderChatList(); this.blur(); }
+  });
+
+  function exportChat(){
+    var c = current();
+    if(!c || !c.msgs.length){ toast("Nothing to export yet"); return; }
+    var md = "# " + c.title + "\n\n_Exported from Technova AI · " + new Date().toLocaleString("en-IN") + "_\n\n";
+    c.msgs.forEach(function(m){
+      if(m.role === "user") md += "**You:** " + m.plain + "\n\n";
+      else md += "**Technova AI:** " + msgText(m.html) + "\n\n";
+    });
+    download((c.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "chat") + ".md", md, "text/markdown");
+    toast("Exported as Markdown");
+  }
+  $("exportChat").addEventListener("click", exportChat);
+
+  var locked = false;
+  thread.addEventListener("scroll", function(){
+    var gap = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
+    locked = gap > 80;
+    $("jumpBtn").classList.toggle("on", locked);
+  });
+  $("jumpBtn").addEventListener("click", function(){
+    locked = false;
+    $("jumpBtn").classList.remove("on");
+    thread.scrollTop = thread.scrollHeight;
+  });
+
+  $("stop").addEventListener("click", function(){
+    state.runId++;
+    setBusy(false);
+    var bots = threadIn.querySelectorAll(".msg--bot .msg__body");
+    var last = bots[bots.length - 1];
+    if(last && !last.querySelector(".msg__meta")){
+      endThink(last, "Stopped");
+      last.insertAdjacentHTML("afterbegin", '<p style="color:var(--text-faint)">Stopped.</p>');
+      saveMsg("bot", last.parentNode.innerHTML, "");
+    }
+    toast("Stopped");
+  });
+
+  input.addEventListener("input", function(){
+    var n = input.value.length;
+    $("charCount").textContent = n > 0 ? n + " chars" : "";
+  });
+
+  document.addEventListener("keydown", function(e){
+    var mod = e.metaKey || e.ctrlKey;
+    if(mod && e.key.toLowerCase() === "k"){ e.preventDefault(); openSide(); $("chatSearch").focus(); }
+    else if(mod && e.shiftKey && e.key.toLowerCase() === "o"){ e.preventDefault(); newChat(); }
+    else if(e.key === "Escape"){ closeDrawer(); closeSide(); }
+  });
+
+  /* theme */
+  function applyTheme(t){
+    if(t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+    else document.documentElement.removeAttribute("data-theme");
+    try{ localStorage.setItem("technova.theme", t); }catch(e){}
+  }
+  function currentTheme(){
+    var attr = document.documentElement.getAttribute("data-theme");
+    if(attr) return attr;
+    return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  }
+  $("themeBtn").addEventListener("click", function(){
+    applyTheme(currentTheme() === "dark" ? "light" : "dark");
+  });
+  $("attachBtn").addEventListener("click", function(){ openDrawer("sources"); });
+
+  $("openSkills").addEventListener("click", function(){ openDrawer("skills"); });
+  $("openSources").addEventListener("click", function(){ openDrawer("sources"); });
+  $("drawerClose").addEventListener("click", closeDrawer);
+  $("dscrim").addEventListener("click", closeDrawer);
+  Array.prototype.forEach.call(document.querySelectorAll(".dtab"), function(b){
+    b.addEventListener("click", function(){ setTab(b.getAttribute("data-tab")); });
+  });
+
+  $("skillList").addEventListener("click", function(e){
+    var sw = e.target.closest("[data-skill]");
+    if(!sw) return;
+    var id = sw.getAttribute("data-skill");
+    state.skills[id] = !state.skills[id];
+    sw.setAttribute("aria-checked", String(!!state.skills[id]));
+    saveStore();
+    if(id === "voice" && state.skills.voice) toast("Replies will be read aloud");
+    if(id === "knowledge" && state.skills.knowledge && !state.index.length && state.sources.length) reindex();
+  });
+
+  $("addUrlBtn").addEventListener("click", function(){ addUrl($("srcUrl").value.trim()); });
+  $("addTextBtn").addEventListener("click", function(){
+    var t = $("srcText").value.trim();
+    if(!t){ toast("Paste some text first"); return; }
+    addSource("paste", $("srcTitle").value.trim() || (t.slice(0,38) + "…"), t);
+    $("srcText").value = "";
+    $("srcTitle").value = "";
+  });
+  $("addFileBtn").addEventListener("click", function(){ $("srcFile").click(); });
+  $("srcFile").addEventListener("change", function(e){
+    var f = e.target.files && e.target.files[0];
+    if(!f) return;
+    var r = new FileReader();
+    r.onload = function(){ addSource("file", f.name, String(r.result)); };
+    r.readAsText(f);
+    e.target.value = "";
+  });
+  $("reindexBtn").addEventListener("click", function(){ reindex(); toast("Re-indexing"); });
+  $("seedBtn").addEventListener("click", function(){ seedExamples(); });
+  $("exportBtn").addEventListener("click", exportKnowledge);
+  $("importBtn").addEventListener("click", function(){ $("importFile").click(); });
+  $("importFile").addEventListener("change", function(e){
+    var f = e.target.files && e.target.files[0];
+    if(!f) return;
+    var r = new FileReader();
+    r.onload = function(){
+      try{
+        var o = JSON.parse(String(r.result));
+        if(o.skills) Object.keys(o.skills).forEach(function(k){ if(k in state.skills) state.skills[k] = !!o.skills[k]; });
+        (o.sources || []).forEach(function(src){
+          if(src && src.text) state.sources.push({id:"s" + Math.random().toString(36).slice(2,9), kind:src.kind || "import", title:src.title || "Imported", text:src.text});
+        });
+        saveStore(); renderSkills(); renderSources(); reindex();
+        toast("Imported");
+      }catch(err){ toast("That file isn't valid knowledge JSON"); }
+    };
+    r.readAsText(f);
+    e.target.value = "";
+  });
+  $("srcList").addEventListener("click", function(e){
+    var b = e.target.closest("[data-remove]");
+    if(b) removeSource(b.getAttribute("data-remove"));
+  });
+
+  /* boot */
+  try{
+    var savedTheme = localStorage.getItem("technova.theme");
+    if(savedTheme === "light" || savedTheme === "dark") document.documentElement.setAttribute("data-theme", savedTheme);
+  }catch(e){}
+  var hadStore = loadStore();
+  loadApi();
+  fillApiInputs();
+  apiStatus();
+  if(state.api.proxy) detectProxy();
+  renderSkills();
+  renderSources();
+  if(state.sources.length){ reindex(); } else { seedExamples(true); }
+  if(!hadStore) setSync("Index ready — " + state.index.length + " chunks from " + state.sources.length + " source(s).", 100);
+  newChat();
+  renderChatList();
+  autoGrow();
+  input.focus();
+})();
+</script>
+<div id="staticNote" style="position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:999;
+  display:flex;gap:10px;align-items:center;background:#16181a;color:#eef1f1;border-radius:99px;
+  padding:8px 8px 8px 16px;font:13px/1.4 ui-sans-serif,system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.28)">
+  <span><b>Static demo</b> — answers come from built-in skills. Accounts and saved chats need the server.</span>
+  <a href="https://github.com/sruthinchess/technova-ai" style="color:#0d0d0d;background:#fff;border-radius:99px;
+     padding:5px 12px;text-decoration:none;font-weight:600;white-space:nowrap">View repo</a>
+</div>
+</body>
+</html>
