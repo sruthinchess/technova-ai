@@ -3,9 +3,12 @@
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls) => { const n = document.createElement(tag); if (cls) n.className = cls; return n; };
 
+const codeStore = {};
+
 const state = {
   user: null,
   model: localStorage.getItem("infinity.model") || "Infinity 1.0 Flash",
+  persona: localStorage.getItem("infinity.persona") || "general",
   models: [],
   conversations: [],
   activeId: null,
@@ -71,8 +74,15 @@ function renderMarkdown(text) {
         const code = escapeHtml(part.body)
           .replace(/\b(from|import|as|def|return|print|const|let|function|await|async|export)\b/g, '<span class="k">$1</span>')
           .replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, '<span class="s">$1</span>');
+        const isHtml = /html|htm/i.test(part.head || "") || /<(!doctype|html)/i.test(part.body);
+        const id = "code-" + Math.random().toString(36).slice(2, 9);
+        codeStore[id] = part.body;
+        const actions =
+          (isHtml ? `<button type="button" class="code__act" data-preview="${id}">Preview</button>` : "") +
+          `<button type="button" class="code__act" data-download="${id}">Download</button>` +
+          `<button type="button" class="code__act" data-copy-code="${id}">Copy</button>`;
         return `<div class="code"><div class="code__bar"><span>${escapeHtml(part.head || "code")}</span>` +
-          `<button type="button" data-copy-code>Copy</button></div><pre>${code}</pre></div>`;
+          `<span class="code__acts">${actions}</span></div><pre>${code}</pre></div>`;
       }
       return textBlock(part.body);
     })
@@ -196,6 +206,10 @@ async function openConversation(id) {
     $("model").value = state.model;
     syncModelLabel();
     $("modelMark").classList.toggle("pro", /pro/i.test(state.model));
+  }
+  if (conversation?.persona && conversation.persona !== state.persona) {
+    state.persona = conversation.persona;
+    $("personaSel").value = state.persona;
   }
   const { messages, hasMore, nextBefore } = await api(`/api/conversations/${id}/messages`);
   state.messages = messages;
@@ -461,7 +475,7 @@ async function send(text, options = {}) {
     url: "/api/chat",
     payload: {
       message, conversationId: state.activeId, model: state.model, attachments,
-      search: state.search, deepThink: state.deep, agent: state.agent,
+      search: state.search, deepThink: state.deep, agent: state.agent, persona: state.persona,
     },
     echoUser: message,
     attachments,
@@ -692,11 +706,13 @@ async function refreshSettings() {
   try {
     const s = await api("/api/settings");
     paintConnectBanner(s);
+    const where = s.provider === "local" ? "local skills" : `${escapeHtml(s.provider)} (${escapeHtml(s.keyHint)})`;
     $("settingsStatus").innerHTML = s.hasKey
-      ? `Live model connected <b>(${escapeHtml(s.keyHint)})</b>${s.keyFromEnv ? " from the server environment" : ""}. ` +
-        `Search: <b>${escapeHtml(s.search)}</b>.`
-      : "No model key yet — answers come from the built-in skills. Paste a key below to turn the model on.";
-    $("keyInput").placeholder = s.hasKey ? `${s.keyHint} — type to replace` : "nvapi-…";
+      ? `Live model: <b>${where}</b>${s.keyFromEnv ? " from the server environment" : ""}. Search: <b>${escapeHtml(s.search)}</b>.`
+      : "No model key yet — answers come from the built-in skills. Paste a Sarvam key below to turn the model on.";
+    $("providerSel").value = s.provider === "nvidia" ? "nvidia" : "sarvam";
+    $("keyInput").placeholder = s.sarvamHint ? `${s.sarvamHint} — type to replace` : "sk_…";
+    $("nvidiaInput").placeholder = s.nvidiaHint || "nvapi-…";
     $("tavilyInput").placeholder = s.searchHint || "tvly-…";
     $("searxInput").value = s.searchFromEnv ? "" : (s.searchUrl || "");
     const chip = $("modelChip");
@@ -734,8 +750,14 @@ async function saveSettings(patch) {
 $("keySave").addEventListener("click", () => {
   const value = $("keyInput").value.trim();
   if (!value) { toast("Paste a key first"); return; }
-  saveSettings({ nvidiaApiKey: value });
+  saveSettings({ sarvamApiKey: value, provider: "sarvam" });
 });
+$("nvidiaSave").addEventListener("click", () => {
+  const value = $("nvidiaInput").value.trim();
+  if (!value) { toast("Paste a key first"); return; }
+  saveSettings({ nvidiaApiKey: value, provider: "nvidia" });
+});
+$("providerSave").addEventListener("click", () => saveSettings({ provider: $("providerSel").value }));
 $("tavilySave").addEventListener("click", () => {
   const value = $("tavilyInput").value.trim();
   if (!value) { toast("Paste a search key first"); return; }
@@ -750,6 +772,10 @@ $("keyClear").addEventListener("click", async () => {
   } catch (err) { toast(err.message); }
 });
 $("settingsClose").addEventListener("click", () => { $("settingsModal").hidden = true; });
+$("previewClose").addEventListener("click", () => { $("previewModal").hidden = true; $("previewFrame").srcdoc = ""; });
+$("previewModal").addEventListener("click", (e) => {
+  if (e.target.id === "previewModal") { $("previewModal").hidden = true; $("previewFrame").srcdoc = ""; }
+});
 $("connectBtn").addEventListener("click", () => openSettings());
 $("connectClose").addEventListener("click", () => {
   localStorage.setItem("infinity.connectDismissed", "1");
@@ -866,6 +892,26 @@ $("mic").addEventListener("click", () => {
 document.addEventListener("click", (event) => {
   const ask = event.target.closest("[data-ask]");
   if (ask) { send(ask.dataset.ask); return; }
+
+  const previewBtn = event.target.closest("[data-preview]");
+  if (previewBtn) {
+    $("previewFrame").srcdoc = codeStore[previewBtn.getAttribute("data-preview")] || "";
+    $("previewModal").hidden = false;
+    return;
+  }
+
+  const downloadBtn = event.target.closest("[data-download]");
+  if (downloadBtn) {
+    const code = codeStore[downloadBtn.getAttribute("data-download")] || "";
+    const isHtml = /<(!doctype|html)/i.test(code);
+    const blob = new Blob([code], { type: isHtml ? "text/html" : "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = isHtml ? "page.html" : "snippet.txt";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    return;
+  }
 
   const copyCode = event.target.closest("[data-copy-code]");
   if (copyCode) {
@@ -1272,6 +1318,30 @@ function syncModelLabel() {
 }
 window.addEventListener("resize", syncModelLabel);
 
+const PERSONAS = [
+  ["general", "General"], ["coder", "Coder"], ["writer", "Writer"], ["translator", "Translator"],
+  ["study", "Study"], ["business", "Business"], ["telugu", "Telugu"],
+];
+
+function renderPersonas() {
+  const sel = $("personaSel");
+  sel.innerHTML = PERSONAS.map(([id, name]) => `<option value="${id}">${name}</option>`).join("");
+  sel.value = state.persona || "general";
+}
+
+$("personaSel").addEventListener("change", async (event) => {
+  state.persona = event.target.value;
+  localStorage.setItem("infinity.persona", state.persona);
+  if (state.activeId) {
+    try {
+      await api(`/api/conversations/${state.activeId}`, { method: "PATCH", body: { persona: state.persona } });
+      const local = state.conversations.find((c) => c.id === state.activeId);
+      if (local) local.persona = state.persona;
+    } catch { /* the next message will carry it anyway */ }
+  }
+  toast(`Personality: ${event.target.selectedOptions[0].textContent}`);
+});
+
 async function loadModels() {
   try {
     const { models } = await api("/api/models");
@@ -1347,6 +1417,7 @@ document.addEventListener("keydown", (event) => {
     $("helpModal").hidden = true;
     $("shareModal").hidden = true;
     $("settingsModal").hidden = true;
+    $("previewModal").hidden = true;
     closePlusMenu();
   }
 });
@@ -1357,6 +1428,7 @@ async function enterApp() {
   $("userName").textContent = state.user.name;
   $("userRow").title = state.user.email || state.user.name;
   $("userAvatar").textContent = (state.user.name || "U").slice(0, 1).toUpperCase();
+  renderPersonas();
   await loadModels();
   await refreshSettings();
   await loadConversations();

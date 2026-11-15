@@ -71,6 +71,10 @@
           <option value="Infinity 1.5 Pro">Infinity 1.5 Pro</option>
         </select>
       </div>
+      <div class="personabtn">
+        <select class="personasel" id="personaSel" aria-label="Personality"></select>
+        <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
       <div class="topbar__right">
         <button class="icon-btn" id="themeBtn" title="Light / dark" aria-label="Toggle theme">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
@@ -183,18 +187,46 @@
   </div>
 </div>
 
+<div class="modal" id="previewModal" hidden>
+  <div class="modal__card modal__card--wide" role="dialog" aria-label="Code preview">
+    <div class="modal__head">
+      <h2>Preview</h2>
+      <button class="icon-btn" id="previewClose" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <iframe id="previewFrame" sandbox="allow-scripts" title="Rendered preview"></iframe>
+    <p class="modal__note" style="margin:8px 0 0">Rendered in a sandboxed frame — scripts run, but it cannot touch this app.</p>
+  </div>
+</div>
+
 <div class="modal" id="settingsModal" hidden>
   <div class="modal__card" role="dialog" aria-label="API settings">
     <div class="modal__head"><h2>API key &amp; search</h2><button class="icon-btn" id="settingsClose" aria-label="Close">
       <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <p class="modal__note" style="margin:0 0 14px" id="settingsStatus">Checking…</p>
 
-    <label class="apilabel" for="keyInput">Model API key</label>
+    <label class="apilabel" for="providerSel">Provider</label>
     <div class="fieldrow">
-      <input class="txtin" id="keyInput" type="password" autocomplete="off" placeholder="nvapi-…">
+      <select class="txtin" id="providerSel">
+        <option value="sarvam">Sarvam AI (primary)</option>
+        <option value="nvidia">NVIDIA (optional)</option>
+      </select>
+      <button class="btn btn--ghost" id="providerSave">Use</button>
+    </div>
+
+    <label class="apilabel" for="keyInput">Sarvam API key</label>
+    <div class="fieldrow">
+      <input class="txtin" id="keyInput" type="password" autocomplete="off" placeholder="sk_…">
       <button class="btn btn--primary" id="keySave" style="width:auto">Save</button>
     </div>
-    <p class="modal__note" style="margin:4px 0 0">Stored on this server, never sent to the browser. An <code>NVIDIA_API_KEY</code> environment variable overrides it.</p>
+
+    <label class="apilabel" for="nvidiaInput">NVIDIA API key <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+    <div class="fieldrow">
+      <input class="txtin" id="nvidiaInput" type="password" autocomplete="off" placeholder="nvapi-…">
+      <button class="btn btn--ghost" id="nvidiaSave">Save</button>
+    </div>
+    <p class="modal__note" style="margin:4px 0 0">Stored on this server, never sent to the browser. <code>SARVAM_API_KEY</code> or <code>NVIDIA_API_KEY</code> in the environment override it.</p>
 
     <label class="apilabel" for="tavilyInput">Search key <span style="text-transform:none;letter-spacing:0">(Tavily, optional)</span></label>
     <div class="fieldrow">

@@ -16,6 +16,7 @@ import {
 import { streamAnswer, hasKey, upstreamModel, listModels } from "./lib/provider.js";
 import { searchWeb, searchProvider, fetchPage } from "./lib/tools.js";
 import * as settings from "./lib/settings.js";
+import { systemFor } from "./lib/personas.js";
 
 loadEnv(); // read .env before any module reads process.env
 
@@ -102,6 +103,7 @@ function createConversation(userId, title) {
     userId,
     title: (title || "New chat").slice(0, 80),
     pinned: false,
+    persona: "general",
     systemPrompt: null,
     shareToken: null,
     model: null,
@@ -237,7 +239,7 @@ async function handleChat(req, res, user, body) {
   try {
     const result = await streamAnswer({
       text: promptParts.join("\n\n"),
-      systemPrompt: conversation.systemPrompt || null,
+      systemPrompt: systemFor(conversation),
       deepThink,
       search,
       tools,
@@ -294,7 +296,7 @@ async function route(req, res) {
     if (path === "/api/health") {
       return json(res, 200, {
         ok: true,
-        provider: hasKey() ? "nvidia" : "local",
+        provider: settings.provider(),
         search: searchProvider(),
         models: ["Infinity 1.0 Flash", "Infinity 1.5 Pro"].map((label) => ({ label, upstream: upstreamModel(label) })),
         uptime: Math.round(process.uptime()),
@@ -370,6 +372,7 @@ async function route(req, res) {
             systemPrompt: c.systemPrompt || null,
             shared: Boolean(c.shareToken),
             model: c.model || null,
+            persona: c.persona || "general",
             messages: data().messages.filter((m) => m.conversationId === c.id).length,
           }));
         return json(res, 200, { conversations: list });
@@ -415,6 +418,7 @@ async function route(req, res) {
           if (typeof patch.title === "string" && patch.title.trim()) conversation.title = patch.title.trim().slice(0, 80);
           if (typeof patch.pinned === "boolean") conversation.pinned = patch.pinned;
           if (typeof patch.model === "string" && patch.model.trim()) conversation.model = patch.model.trim().slice(0, 60);
+          if (typeof patch.persona === "string" && patch.persona.trim()) conversation.persona = patch.persona.trim().slice(0, 40);
           if (typeof patch.systemPrompt === "string") {
             const prompt = patch.systemPrompt.trim().slice(0, 2000);
             conversation.systemPrompt = prompt || null;
@@ -439,6 +443,8 @@ async function route(req, res) {
         const patch = await readBody(req);
         // never echo a key back, only whether it landed
         settings.set({
+          provider: patch.provider,
+          sarvamApiKey: patch.sarvamApiKey,
           nvidiaApiKey: patch.nvidiaApiKey,
           tavilyApiKey: patch.tavilyApiKey,
           searchUrl: patch.searchUrl,
@@ -447,8 +453,37 @@ async function route(req, res) {
       }
 
       if (path === "/api/settings" && method === "DELETE") {
-        settings.set({ nvidiaApiKey: "", tavilyApiKey: "", searchUrl: "" });
+        settings.set({ provider: "", sarvamApiKey: "", nvidiaApiKey: "", tavilyApiKey: "", searchUrl: "" });
         return json(res, 200, settings.summary());
+      }
+
+      if (path === "/api/tts" && method === "POST") {
+        const { text, lang } = await readBody(req);
+        const key = settings.sarvamKey();
+        if (!key) return json(res, 400, { error: "no Sarvam key configured — add one under API key & search" });
+        const clean = String(text || "").replace(/[*_`#>]/g, "").slice(0, 1200).trim();
+        if (!clean) return json(res, 400, { error: "nothing to speak" });
+        try {
+          const upstream = await fetch("https://api.sarvam.ai/text-to-speech", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "api-subscription-key": key },
+            body: JSON.stringify({
+              text: clean,
+              language_code: lang || "en-IN",
+              model: process.env.SARVAM_TTS_MODEL || "bulbul:v4-flash",
+              speaker: process.env.SARVAM_TTS_SPEAKER || "simran_en_customer",
+            }),
+            signal: AbortSignal.timeout(20000),
+          });
+          const body = await upstream.text();
+          if (!upstream.ok) return json(res, upstream.status, { error: body.slice(0, 300) });
+          const parsed = JSON.parse(body);
+          const audio = (parsed.audios || [])[0];
+          if (!audio) return json(res, 502, { error: "the provider returned no audio" });
+          return json(res, 200, { audio, mime: "audio/wav" });
+        } catch (err) {
+          return json(res, 502, { error: err.message });
+        }
       }
 
       if (path === "/api/tools/page" && method === "POST") {
@@ -478,7 +513,7 @@ async function route(req, res) {
           messages: messages.length,
           userMessages: messages.filter((m) => m.role === "user").length,
           words,
-          provider: hasKey() ? "nvidia" : "local",
+          provider: settings.provider(),
         search: searchProvider(),
           memberSince: user.createdAt,
         });

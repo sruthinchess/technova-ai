@@ -103,6 +103,22 @@ with the model picker and a single `⋯` menu, and the thread with the composer.
 used to be a separate icon — realtime voice, instructions, share, export, delete — lives in that
 `⋯` menu, so the header stays quiet.
 
+## Providers
+
+| Provider | Role | Models | Auth |
+| --- | --- | --- | --- |
+| **Sarvam AI** | primary | `sarvam-105b`, `sarvam-105b-conversations` (shown as Infinity 1.0 Flash / 1.5 Pro) | `api-subscription-key` header |
+| **NVIDIA** | optional | any OpenAI-compatible model id | `Authorization: Bearer` |
+
+Choose one in *API key & search*, or set `SARVAM_API_KEY` / `NVIDIA_API_KEY`. The environment wins.
+Sarvam also powers text-to-speech (`/api/tts`, Bulbul), with the browser voice as the fallback.
+
+## Personalities
+
+Seven presets — General, Coder, Writer, Translator, Study, Business, Telugu — chosen per chat and
+stored with the conversation. Each is a system prompt; the Coder preset is what you want for
+generating, debugging and explaining code.
+
 ## Agent mode
 
 With a key set, the model runs as an agent: it decides which tools to call, the server runs them,
