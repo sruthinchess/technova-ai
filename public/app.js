@@ -306,28 +306,32 @@ $("deleteChat").addEventListener("click", () => {
 
 /* ---------------- thread ---------------- */
 function helloHtml() {
+  const cards = [
+    ["Write anything", "A post, an email, a draft", "M4 20h4l10-10-4-4L4 16z"],
+    ["Build a website", "HTML, CSS and JS", "M8 8l-4 4 4 4M16 8l4 4-4 4"],
+    ["Explain a topic", "Simply, with an example", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8v5M12 16h.01"],
+    ["Analyse a document", "Attach a file to start", "M14 3v5h5M6 3h8l5 5v13H6z"],
+    ["Generate code", "Working files, not fragments", "M8 8l-4 4 4 4M16 8l4 4-4 4"],
+    ["Research a topic", "Search the web, cite sources", "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-3.5-3.5"],
+  ];
+  const ask = [
+    "Write a short post about our new AI feature",
+    "Give me a starter html page",
+    "Explain quantum computing simply",
+    "How do I attach a document?",
+    "Show me the text to speech quickstart",
+    "What models are available?",
+  ];
+  const grid = cards.map(([title, sub, icon], i) =>
+    `<button class="suggcard" data-ask="${escapeHtml(ask[i])}">
+       <svg viewBox="0 0 24 24"><path d="${icon}"/></svg>
+       <b>${title}</b><span>${sub}</span>
+     </button>`).join("");
   return `<div class="hello">
     <div class="hello__badge">∞</div>
-    <h1>What can I help with?</h1>
-    <p class="hello__sub">Ask a question, run a calculation, or attach a file.</p>
-    <div class="hello__chips">
-      <button data-ask="What models are available?">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M4.2 7.5l2.6 1.5M17.2 15l2.6 1.5M4.2 16.5l2.6-1.5M17.2 9l2.6-1.5"/><circle cx="12" cy="12" r="3.2"/></svg></span>
-        <span><b>Models</b>What's available right now?</span>
-      </button>
-      <button data-ask="12.5% of 8400">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h9M5 17h5"/><path d="M17 14l3 3M20 14l-3 3"/></svg></span>
-        <span><b>Calculate</b>12.5% of 8400</span>
-      </button>
-      <button data-ask="convert 10 km to miles">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 12h16M7 8l-3 4 3 4M17 8l3 4-3 4"/></svg></span>
-        <span><b>Convert</b>10 km to miles</span>
-      </button>
-      <button data-ask="how much do voice agents cost per minute?">
-        <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v18M8 7h8M8 17h8"/><circle cx="12" cy="12" r="9"/></svg></span>
-        <span><b>Pricing</b>What do voice agents cost?</span>
-      </button>
-    </div>
+    <h1>What can I help you with?</h1>
+    <p class="hello__sub">Your intelligent workspace for everything.</p>
+    <div class="suggcards">${grid}</div>
   </div>`;
 }
 
@@ -417,13 +421,23 @@ function iconButton(attr, label, icon) {
   return `<button type="button" class="mbtn" ${attr} title="${label}" aria-label="${label}">${icon}</button>`;
 }
 
+const ICON_THUMB_UP = `<path d="M7 11v9H4v-9zM7 11l4-7a2 2 0 0 1 3 2v3h5a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 1H7"/>`;
+const ICON_THUMB_DOWN = `<path d="M17 13V4h3v9zM17 13l-4 7a2 2 0 0 1-3-2v-3H5a2 2 0 0 1-2-2l2-7a2 2 0 0 1 2-1h10"/>`;
+
 function metaHtml(message, isLast = false) {
   const label = message.source || message.model || "Assistant";
   const when = relTime(message.createdAt);
-  return `<div class="msg__meta">` +
+  const id = message.id || "";
+  const thumb = (dir, icon) =>
+    `<button type="button" class="thumb" data-rate="${dir}" aria-pressed="${message.rating === dir}" ` +
+    `title="${dir === "up" ? "Good answer" : "Not helpful"}" aria-label="${dir === "up" ? "Good answer" : "Not helpful"}">` +
+    `<svg viewBox="0 0 24 24">${icon}</svg></button>`;
+  const thumbs = id ? thumb("up", ICON_THUMB_UP) + thumb("down", ICON_THUMB_DOWN) : "";
+  return `<div class="msg__meta"${id ? ` data-message-id="${escapeHtml(id)}"` : ""}>` +
     `<span class="src">${escapeHtml(label)}</span>` +
     (when ? `<span class="when">${escapeHtml(when)}</span>` : "") +
     `<span class="spacer"></span>` +
+    thumbs +
     iconButton("data-copy-msg", "Copy", ICON.copy) +
     iconButton("data-speak", "Read aloud", ICON.speak) +
     (isLast ? iconButton("data-regen", "Regenerate", ICON.regen) : "") +
@@ -598,11 +612,13 @@ async function streamRequest({ url, payload, echoUser, attachments = [], dropLas
     if (runId === state.runId) {
       think.done(Date.now() - started);
       body.innerHTML = answer
-        ? renderMarkdown(answer) + sourcesHtml(sources) + metaHtml({ source, createdAt: Date.now() }, true)
+        ? renderMarkdown(answer) + sourcesHtml(sources) +
+          metaHtml({ source, createdAt: Date.now(), id: meta?.messageId }, true)
         : '<p style="color:var(--text-faint)">Stopped.</p>';
       setBusy(false);
       scrollDown();
       if (realtime && realtimeActive()) speakAnswer(answer);
+      else if (state.speakReplies && answer) speakReply(answer);
     }
   }
 
@@ -710,6 +726,15 @@ async function refreshSettings() {
     $("settingsStatus").innerHTML = s.hasKey
       ? `Live model: <b>${where}</b>${s.keyFromEnv ? " from the server environment" : ""}. Search: <b>${escapeHtml(s.search)}</b>.`
       : "No model key yet — answers come from the built-in skills. Paste a Sarvam key below to turn the model on.";
+    const setPill = (pillId, stateId, on, text) => {
+      const pill = $(pillId), state = $(stateId);
+      if (!pill) return;
+      pill.textContent = on ? "connected" : "off";
+      pill.className = "pill " + (on ? "ok" : "off");
+      if (state) state.textContent = text;
+    };
+    setPill("sarvamPill", "sarvamState", Boolean(s.sarvamHint), s.sarvamHint ? `key ${s.sarvamHint}` : "not connected");
+    setPill("nvidiaPill", "nvidiaState", Boolean(s.nvidiaHint), s.nvidiaHint ? `key ${s.nvidiaHint}` : "optional");
     $("providerSel").value = s.provider === "nvidia" ? "nvidia" : "sarvam";
     $("keyInput").placeholder = s.sarvamHint ? `${s.sarvamHint} — type to replace` : "sk_…";
     $("nvidiaInput").placeholder = s.nvidiaHint || "nvapi-…";
@@ -771,6 +796,21 @@ $("keyClear").addEventListener("click", async () => {
     toast("Keys removed");
   } catch (err) { toast(err.message); }
 });
+$("themeQuick").addEventListener("click", () => $("themeBtn").click());
+$("accentSel").addEventListener("change", (e) => {
+  const value = e.target.value;
+  document.documentElement.dataset.accent = value;
+  localStorage.setItem("infinity.accent", value);
+});
+$("accentSel").value = localStorage.getItem("infinity.accent") || "violet";
+$("voiceSwitch").addEventListener("click", () => {
+  const on = $("voiceSwitch").getAttribute("aria-checked") !== "true";
+  $("voiceSwitch").setAttribute("aria-checked", String(on));
+  state.speakReplies = on;
+  localStorage.setItem("infinity.speak", on ? "1" : "0");
+});
+$("voiceSwitch").setAttribute("aria-checked", localStorage.getItem("infinity.speak") === "1" ? "true" : "false");
+state.speakReplies = localStorage.getItem("infinity.speak") === "1";
 $("settingsClose").addEventListener("click", () => { $("settingsModal").hidden = true; });
 $("previewClose").addEventListener("click", () => { $("previewModal").hidden = true; $("previewFrame").srcdoc = ""; });
 $("previewModal").addEventListener("click", (e) => {
@@ -892,6 +932,26 @@ $("mic").addEventListener("click", () => {
 document.addEventListener("click", (event) => {
   const ask = event.target.closest("[data-ask]");
   if (ask) { send(ask.dataset.ask); return; }
+
+  const rateBtn = event.target.closest("[data-rate]");
+  if (rateBtn) {
+    const meta = rateBtn.closest(".msg__meta");
+    const body = rateBtn.closest(".msg__body");
+    const messageId = meta?.dataset.messageId;
+    if (messageId) {
+      const dir = rateBtn.getAttribute("data-rate");
+      const already = rateBtn.getAttribute("aria-pressed") === "true";
+      const next = already ? null : dir;
+      api(`/api/messages/${messageId}`, { method: "PATCH", body: { rating: next } })
+        .then(() => {
+          meta.querySelectorAll("[data-rate]").forEach((b) => b.setAttribute("aria-pressed", "false"));
+          if (next) rateBtn.setAttribute("aria-pressed", "true");
+          toast(next ? "Thanks — noted" : "Rating cleared");
+        })
+        .catch((err) => toast(err.message));
+    }
+    return;
+  }
 
   const previewBtn = event.target.closest("[data-preview]");
   if (previewBtn) {
@@ -1329,6 +1389,43 @@ function renderPersonas() {
   sel.value = state.persona || "general";
 }
 
+const MODES = {
+  chat:       { persona: "general",    search: false, agent: true,  hint: "Ask anything" },
+  research:   { persona: "business",   search: true,  agent: true,  hint: "Research a topic — it will search and cite" },
+  coding:     { persona: "coder",      search: false, agent: true,  hint: "Describe the code you need" },
+  voice:      { persona: "general",    search: false, agent: true,  hint: "Speak, or type — replies are read aloud", voice: true },
+  writing:    { persona: "writer",     search: false, agent: true,  hint: "What should it write?" },
+  translator: { persona: "translator", search: false, agent: true,  hint: "Paste text and name the target language" },
+  study:      { persona: "study",      search: false, agent: true,  hint: "What are you studying?" },
+  agents:     { persona: "general",    search: true,  agent: true,  hint: "Give it a task — it can search, browse and calculate" },
+  files:      { persona: "general",    search: false, agent: true,  hint: "Attach a file with the + button" },
+};
+
+function setMode(id) {
+  const mode = MODES[id] || MODES.chat;
+  state.mode = MODES[id] ? id : "chat";
+  state.persona = mode.persona;
+  state.search = mode.search;
+  state.agent = mode.agent;
+  $("personaSel").value = mode.persona;
+  $("input").placeholder = mode.hint;
+  localStorage.setItem("infinity.mode", state.mode);
+  localStorage.setItem("infinity.search", state.search ? "1" : "0");
+  localStorage.setItem("infinity.agent", state.agent ? "1" : "0");
+  paintToggles();
+  document.querySelectorAll("#modeNav .navitem").forEach((b) => {
+    b.setAttribute("aria-current", String(b.dataset.mode === state.mode));
+  });
+  if (mode.voice && RealtimeRecognition) $("realtimeBtn").click();
+}
+
+$("modeNav").addEventListener("click", (event) => {
+  const item = event.target.closest("[data-mode]");
+  if (!item) return;
+  setMode(item.dataset.mode);
+  closeSide();
+});
+
 $("personaSel").addEventListener("change", async (event) => {
   state.persona = event.target.value;
   localStorage.setItem("infinity.persona", state.persona);
@@ -1340,6 +1437,12 @@ $("personaSel").addEventListener("change", async (event) => {
     } catch { /* the next message will carry it anyway */ }
   }
   toast(`Personality: ${event.target.selectedOptions[0].textContent}`);
+});
+
+$("collapseBtn")?.addEventListener("click", () => {
+  const app = document.querySelector(".app");
+  app.classList.toggle("slim");
+  localStorage.setItem("infinity.slim", app.classList.contains("slim") ? "1" : "0");
 });
 
 async function loadModels() {
@@ -1382,7 +1485,6 @@ $("themeBtn").addEventListener("click", () => {
 function openSide() { $("side").classList.add("open"); $("scrim").classList.add("on"); }
 function closeSide() { $("side").classList.remove("open"); $("scrim").classList.remove("on"); }
 $("burger").addEventListener("click", openSide);
-$("closeSide").addEventListener("click", closeSide);
 $("scrim").addEventListener("click", closeSide);
 
 $("thread").addEventListener("scroll", () => {
@@ -1429,6 +1531,8 @@ async function enterApp() {
   $("userRow").title = state.user.email || state.user.name;
   $("userAvatar").textContent = (state.user.name || "U").slice(0, 1).toUpperCase();
   renderPersonas();
+  setMode(localStorage.getItem("infinity.mode") || "chat");
+  if (localStorage.getItem("infinity.slim") === "1") document.querySelector(".app").classList.add("slim");
   await loadModels();
   await refreshSettings();
   await loadConversations();

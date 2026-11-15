@@ -378,6 +378,19 @@ async function route(req, res) {
         return json(res, 200, { conversations: list });
       }
 
+      const match2 = path.match(/^\/api\/messages\/([\w-]+)$/);
+      if (match2 && method === "PATCH") {
+        // a thumbs up/down on one answer
+        const message = data().messages.find((m) => m.id === match2[1]);
+        if (!message) return json(res, 404, { error: "message not found" });
+        const owns = conversationsOf(user.id).some((c) => c.id === message.conversationId);
+        if (!owns) return json(res, 404, { error: "message not found" });
+        const patch = await readBody(req);
+        message.rating = patch.rating === "up" || patch.rating === "down" ? patch.rating : null;
+        save();
+        return json(res, 200, { ok: true, rating: message.rating });
+      }
+
       if (path === "/api/conversations" && method === "DELETE") {
         const mine = new Set(conversationsOf(user.id).map((c) => c.id));
         data().conversations = data().conversations.filter((c) => !mine.has(c.id));
