@@ -702,7 +702,7 @@ async function refreshSettings() {
     const chip = $("modelChip");
     if (chip) {
       chip.classList.toggle("live", Boolean(s.hasKey));
-      $("modelChipText").textContent = s.hasKey ? "Live model" : "Local skills";
+      $("modelChipText").textContent = s.hasKey ? "Live" : "Local";
     }
     const armed = state.search || state.agent || state.deep;
     $("attachBtn").classList.toggle("armed", armed);
@@ -1069,6 +1069,7 @@ function listenOnce() {
 }
 
 $("realtimeBtn").addEventListener("click", () => {
+  closeMenus();
   if (!RealtimeRecognition) { toast("This browser has no speech recognition — Chrome or Edge does"); return; }
   if (realtime.active) { stopRealtime(); return; }
   realtime.active = true;
@@ -1079,6 +1080,36 @@ $("realtimeBtn").addEventListener("click", () => {
 $("realtimeStop").addEventListener("click", stopRealtime);
 
 /* ---------------- share ---------------- */
+function closeMenus() {
+  const userMenu = $("userMenu"), moreMenu = $("moreMenu");
+  if (userMenu) userMenu.hidden = true;
+  if (moreMenu) moreMenu.hidden = true;
+  $("userRow")?.setAttribute("aria-expanded", "false");
+  $("moreBtn")?.setAttribute("aria-expanded", "false");
+}
+
+$("userRow").addEventListener("click", (event) => {
+  event.stopPropagation();
+  const open = $("userMenu").hidden;
+  closeMenus();
+  $("userMenu").hidden = !open;
+  $("userRow").setAttribute("aria-expanded", String(open));
+});
+
+$("moreBtn").addEventListener("click", (event) => {
+  event.stopPropagation();
+  const open = $("moreMenu").hidden;
+  closeMenus();
+  $("moreMenu").hidden = !open;
+  $("moreBtn").setAttribute("aria-expanded", String(open));
+});
+
+$("userMenu").addEventListener("click", (event) => event.stopPropagation());
+$("moreMenu").addEventListener("click", () => closeMenus());
+document.addEventListener("click", () => closeMenus());
+
+$("settingsMenuBtn").addEventListener("click", () => { closeMenus(); openSettings(); });
+
 $("shareBtn").addEventListener("click", async () => {
   if (!state.activeId) { toast("Send a message first"); return; }
   try {
@@ -1324,7 +1355,7 @@ document.addEventListener("keydown", (event) => {
 async function enterApp() {
   $("app").hidden = false;
   $("userName").textContent = state.user.name;
-  $("userEmail").textContent = state.user.email;
+  $("userRow").title = state.user.email || state.user.name;
   $("userAvatar").textContent = (state.user.name || "U").slice(0, 1).toUpperCase();
   await loadModels();
   await refreshSettings();

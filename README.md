@@ -96,6 +96,13 @@ Then open the app: the model menu now lists **every model your key can see**, fe
 from `GET /api/models` (which proxies the upstream `/v1/models` catalogue and caches it for ten
 minutes). Without a key, or if the upstream is unreachable, it falls back to the two built-in models.
 
+## The interface
+
+One screen, three zones: a sidebar (new chat, search, chats, account and model status), a header
+with the model picker and a single `⋯` menu, and the thread with the composer. Everything that
+used to be a separate icon — realtime voice, instructions, share, export, delete — lives in that
+`⋯` menu, so the header stays quiet.
+
 ## Agent mode
 
 With a key set, the model runs as an agent: it decides which tools to call, the server runs them,
