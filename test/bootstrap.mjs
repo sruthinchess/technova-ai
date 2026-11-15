@@ -19,7 +19,7 @@ check("it reports auth is off", me.auth === "off");
 
 const page = await fetch(`${base}/`);
 const html = await page.text();
-check("the app loads without signing in", page.status === 200 && html.includes("Technova AI"));
+check("the app loads without signing in", page.status === 200 && html.includes("Infinity AI"));
 check("no login form in the markup", !html.includes("authForm"));
 
 const chat = await fetch(`${base}/api/chat`, {

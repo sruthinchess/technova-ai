@@ -1,19 +1,19 @@
-// Technova AI — client. Talks to the API in server.js.
+// Infinity AI — client. Talks to the API in server.js.
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls) => { const n = document.createElement(tag); if (cls) n.className = cls; return n; };
 
 const state = {
   user: null,
-  model: localStorage.getItem("technova.model") || "Technova 1.0 Flash",
+  model: localStorage.getItem("infinity.model") || "Infinity 1.0 Flash",
   models: [],
   conversations: [],
   activeId: null,
   renamingId: null,
   attachments: [],
-  search: localStorage.getItem("technova.search") === "1",
-  deep: localStorage.getItem("technova.deep") === "1",
-  agent: localStorage.getItem("technova.agent") !== "0",
+  search: localStorage.getItem("infinity.search") === "1",
+  deep: localStorage.getItem("infinity.deep") === "1",
+  agent: localStorage.getItem("infinity.agent") !== "0",
   sources: [],
   editing: null,
   messages: [],
@@ -128,7 +128,7 @@ function setBusy(busy) {
   $("send").hidden = busy;
   $("stop").hidden = !busy;
   $("send").disabled = busy || !$("input").value.trim();
-  setStatus(busy ? "Generating…" : "Technova AI can make mistakes. Check important info.");
+  setStatus(busy ? "Generating…" : "Infinity AI can make mistakes. Check important info.");
 }
 
 /* ---------------- conversations ---------------- */
@@ -684,7 +684,7 @@ $("menuSettings").addEventListener("click", () => { closePlusMenu(); openSetting
 function paintConnectBanner(s) {
   const banner = $("connectBanner");
   if (!banner) return;
-  const dismissed = localStorage.getItem("technova.connectDismissed") === "1";
+  const dismissed = localStorage.getItem("infinity.connectDismissed") === "1";
   banner.hidden = Boolean(s && s.hasKey) || dismissed;
 }
 
@@ -752,7 +752,7 @@ $("keyClear").addEventListener("click", async () => {
 $("settingsClose").addEventListener("click", () => { $("settingsModal").hidden = true; });
 $("connectBtn").addEventListener("click", () => openSettings());
 $("connectClose").addEventListener("click", () => {
-  localStorage.setItem("technova.connectDismissed", "1");
+  localStorage.setItem("infinity.connectDismissed", "1");
   $("connectBanner").hidden = true;
 });
 $("settingsModal").addEventListener("click", (e) => { if (e.target.id === "settingsModal") $("settingsModal").hidden = true; });
@@ -856,7 +856,7 @@ $("mic").addEventListener("click", () => {
   recognition.onend = () => {
     mic.classList.remove("mic-live");
     $("wave").classList.remove("on");
-    setStatus("Technova AI can make mistakes. Check important info.");
+    setStatus("Infinity AI can make mistakes. Check important info.");
     $("input").focus();
   };
   recognition.start();
@@ -949,7 +949,7 @@ $("exportAllBtn").addEventListener("click", async () => {
     const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "technova-chats.json";
+    link.download = "infinity-chats.json";
     document.body.appendChild(link); link.click(); link.remove();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     toast("Exported every chat");
@@ -959,8 +959,8 @@ $("exportAllBtn").addEventListener("click", async () => {
 $("exportChat").addEventListener("click", () => {
   if (!state.messages.length) { toast("Nothing to export yet"); return; }
   const title = state.conversations.find((c) => c.id === state.activeId)?.title || "chat";
-  const md = [`# ${title}`, "", `_Exported from Technova AI · ${new Date().toLocaleString("en-IN")}_`, ""];
-  for (const m of state.messages) md.push(m.role === "user" ? `**You:** ${m.text}` : `**Technova AI:** ${m.text}`, "");
+  const md = [`# ${title}`, "", `_Exported from Infinity AI · ${new Date().toLocaleString("en-IN")}_`, ""];
+  for (const m of state.messages) md.push(m.role === "user" ? `**You:** ${m.text}` : `**Infinity AI:** ${m.text}`, "");
   const blob = new Blob([md.join("\n")], { type: "text/markdown" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -979,19 +979,19 @@ function paintToggles() {
 }
 $("agentToggle").addEventListener("click", () => {
   state.agent = !state.agent;
-  localStorage.setItem("technova.agent", state.agent ? "1" : "0");
+  localStorage.setItem("infinity.agent", state.agent ? "1" : "0");
   paintToggles();
   toast(state.agent ? "Agent mode on — it can search, browse and calculate" : "Agent mode off");
 });
 $("searchToggle").addEventListener("click", () => {
   state.search = !state.search;
-  localStorage.setItem("technova.search", state.search ? "1" : "0");
+  localStorage.setItem("infinity.search", state.search ? "1" : "0");
   paintToggles();
   toast(state.search ? "Web search on" : "Web search off");
 });
 $("deepToggle").addEventListener("click", () => {
   state.deep = !state.deep;
-  localStorage.setItem("technova.deep", state.deep ? "1" : "0");
+  localStorage.setItem("infinity.deep", state.deep ? "1" : "0");
   paintToggles();
   toast(state.deep ? "Deep think on — slower, more careful answers" : "Deep think off");
 });
@@ -1143,7 +1143,7 @@ $("shareRevoke").addEventListener("click", async () => {
 const ACCENTS = ["teal", "cobalt", "amber", "plum"];
 function setAccent(name) {
   document.documentElement.dataset.accent = name;
-  localStorage.setItem("technova.accent", name);
+  localStorage.setItem("infinity.accent", name);
 }
 
 /* ---------------- command palette ---------------- */
@@ -1231,7 +1231,7 @@ async function renderShared(token) {
   $("side").hidden = true;
   document.querySelector(".topbar").innerHTML =
     `<div class="modelbtn" style="pointer-events:none"><span class="mmark">∞</span><span id="sharedTitle">Shared chat</span></div>
-     <div class="topbar__right"><a class="icon-btn" href="/" title="Open Technova AI">Open app</a></div>`;
+     <div class="topbar__right"><a class="icon-btn" href="/" title="Open Infinity AI">Open app</a></div>`;
   document.querySelector(".composer").hidden = true;
   document.querySelectorAll("#shareBtn,#exportChat,#deleteChat,#instructionsBtn").forEach((n) => n?.remove());
   try {
@@ -1268,7 +1268,7 @@ function syncModelLabel() {
   const label = $("modelLabel");
   if (!label) return; // the shared view has no model picker
   const narrow = window.innerWidth < 520;
-  label.textContent = narrow ? state.model.replace(/^Technova\s+/i, "") : state.model;
+  label.textContent = narrow ? state.model.replace(/^Infinity\s+/i, "") : state.model;
 }
 window.addEventListener("resize", syncModelLabel);
 
@@ -1281,12 +1281,12 @@ async function loadModels() {
 
 $("model").value = state.model;
 $("modelLabel").textContent = state.model;
-$("modelMark").classList.toggle("pro", state.model === "Technova 1.5 Pro");
+$("modelMark").classList.toggle("pro", state.model === "Infinity 1.5 Pro");
 $("model").addEventListener("change", (event) => {
   state.model = event.target.value;
-  localStorage.setItem("technova.model", state.model);
+  localStorage.setItem("infinity.model", state.model);
   syncModelLabel();
-  $("modelMark").classList.toggle("pro", state.model === "Technova 1.5 Pro");
+  $("modelMark").classList.toggle("pro", state.model === "Infinity 1.5 Pro");
   // remember the choice on this chat so it comes back on reload
   if (state.activeId) {
     api(`/api/conversations/${state.activeId}`, { method: "PATCH", body: { model: state.model } })
@@ -1306,7 +1306,7 @@ const currentTheme = () =>
 $("themeBtn").addEventListener("click", () => {
   const next = currentTheme() === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
-  localStorage.setItem("technova.theme", next);
+  localStorage.setItem("infinity.theme", next);
 });
 
 function openSide() { $("side").classList.add("open"); $("scrim").classList.add("on"); }
@@ -1366,9 +1366,9 @@ async function enterApp() {
 }
 
 (async function boot() {
-  const savedTheme = localStorage.getItem("technova.theme");
+  const savedTheme = localStorage.getItem("infinity.theme");
   if (savedTheme) document.documentElement.dataset.theme = savedTheme;
-  const savedAccent = localStorage.getItem("technova.accent");
+  const savedAccent = localStorage.getItem("infinity.accent");
   if (savedAccent) document.documentElement.dataset.accent = savedAccent;
 
   const sharedMatch = location.pathname.match(/^\/s\/([\w-]+)$/);

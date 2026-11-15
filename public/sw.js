@@ -1,5 +1,5 @@
 // Service worker: keeps the shell available offline. Answers always come from the server.
-const CACHE = "technova-shell-v1";
+const CACHE = "infinity-shell-v1";
 const SHELL = ["/", "/styles.css", "/app.js", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

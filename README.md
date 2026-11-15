@@ -1,4 +1,4 @@
-# Technova AI — full stack
+# Infinity AI — full stack
 
 A complete AI chat application: Node server, accounts, conversations saved to a database,
 streaming answers, and a browser UI. No framework, no build step, no dependencies.
@@ -25,7 +25,7 @@ npm test           # 32 end-to-end checks against a real server
 - **Conversations stored server-side** — they follow the account across browsers and devices
 - **Streaming answers** over server-sent events: `meta`, `step`, `reason`, `delta`, `done`
 - **Thinking panel** showing the pipeline steps and elapsed time; model reasoning tokens stream into it
-- **Two models** — Technova 1.0 Flash and Technova 1.5 Pro, mapped to upstream model ids
+- **Two models** — Infinity 1.0 Flash and Infinity 1.5 Pro, mapped to upstream model ids
 - **Edit and resend** your last question — the old answer is replaced, not stacked
 - **Custom instructions** per chat, sent to the model ahead of every message
 - **Attachments** — attach `.txt`/`.md`/`.json`/`.csv` files and they travel with the message
@@ -141,8 +141,8 @@ app answers from its deterministic skills and never calls the network.
 | `DB_PATH` | `./data/db.json` | Where conversations and users are stored |
 | `NVIDIA_API_KEY` | — | Enables live model answers |
 | `MODEL_ENDPOINT` | `https://integrate.api.nvidia.com/v1/chat/completions` | Any OpenAI-compatible endpoint |
-| `MODEL_FAST` | `meta/llama-3.1-8b-instruct` | Upstream model behind Technova 1.0 Flash |
-| `MODEL_PRO` | `meta/llama-3.3-70b-instruct` | Upstream model behind Technova 1.5 Pro |
+| `MODEL_FAST` | `meta/llama-3.1-8b-instruct` | Upstream model behind Infinity 1.0 Flash |
+| `MODEL_PRO` | `meta/llama-3.3-70b-instruct` | Upstream model behind Infinity 1.5 Pro |
 | `SECURE_COOKIES` | off | Set to `1` when serving over HTTPS |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | — | Create the first account on boot |
 | `ALLOW_SIGNUP` | off | Set to `1` to allow public sign-up |
@@ -220,8 +220,8 @@ This app wants a **writable disk** and a **long-lived process** — Railway, Ren
 or Docker.
 
 ```bash
-docker build -t technova-ai .
-docker run -p 3000:3000 -v infinity-data:/app/data -e NVIDIA_API_KEY=your-key technova-ai
+docker build -t infinity-ai .
+docker run -p 3000:3000 -v infinity-data:/app/data -e NVIDIA_API_KEY=your-key infinity-ai
 ```
 
 Behind a proxy, set `SECURE_COOKIES=1` and terminate TLS at the proxy.

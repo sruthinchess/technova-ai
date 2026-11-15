@@ -130,7 +130,7 @@ console.log("\nmodels");
   check("model catalogue responds", models.res.status === 200);
   check("falls back to the built-ins without a key", models.json?.source === "builtin", models.json?.source);
   check("returns two built-in models", models.json?.models?.length === 2);
-  check("labels are Technova", models.json?.models?.[0]?.label?.startsWith("Technova"), models.json?.models?.[0]?.label);
+  check("labels are Infinity", models.json?.models?.[0]?.label?.startsWith("Infinity"), models.json?.models?.[0]?.label);
 }
 
 console.log("\nregenerate");
@@ -193,7 +193,7 @@ console.log("\npagination and per-chat model");
   const fresh = await call("/api/conversations", { method: "POST", cookie, body: { title: "Long chat" } });
   const id = fresh.json.conversation.id;
   for (let i = 1; i <= 6; i++) {
-    await call("/api/chat", { method: "POST", cookie, body: { message: `${i} + ${i}`, conversationId: id, model: "Technova 1.5 Pro" } });
+    await call("/api/chat", { method: "POST", cookie, body: { message: `${i} + ${i}`, conversationId: id, model: "Infinity 1.5 Pro" } });
   }
   const page = await call(`/api/conversations/${id}/messages?limit=5`, { cookie });
   check("limits the page", page.json.messages.length === 5, String(page.json.messages.length));
@@ -207,7 +207,7 @@ console.log("\npagination and per-chat model");
 
   const list = await call("/api/conversations", { cookie });
   const stored = list.json.conversations.find((c) => c.id === id);
-  check("remembers the chat's model", stored?.model === "Technova 1.5 Pro", String(stored?.model));
+  check("remembers the chat's model", stored?.model === "Infinity 1.5 Pro", String(stored?.model));
 }
 
 console.log("\nsharing");
@@ -289,11 +289,11 @@ console.log("\nclear all");
 console.log("\nstatic files");
 {
   const index = await call("/");
-  check("serves index.html", index.res.status === 200 && index.text.includes("Technova AI"));
+  check("serves index.html", index.res.status === 200 && index.text.includes("Infinity AI"));
   const css = await call("/styles.css");
   check("serves the stylesheet", css.res.headers.get("content-type")?.includes("text/css"));
   const traversal = await call("/../package.json");
-  check("blocks path traversal", !traversal.text.includes('"name": "technova-ai"'));
+  check("blocks path traversal", !traversal.text.includes('"name": "infinity-ai"'));
 }
 
 console.log("\nlogout");

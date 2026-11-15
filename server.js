@@ -1,4 +1,4 @@
-// Technova AI — full-stack server.
+// Infinity AI — full-stack server.
 // Plain Node 20, no dependencies: HTTP router, session auth, JSON store, SSE streaming.
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
@@ -51,7 +51,7 @@ function readBody(req) {
 
 const LOCAL_USER = {
   id: "local",
-  email: "local@technova",
+  email: "local@infinity",
   name: "You",
   password: "", // no password: this account is not reachable through /api/auth/login
   createdAt: Date.now(),
@@ -144,7 +144,7 @@ async function serveStatic(req, res, pathname) {
 /* ---------------- chat (SSE) ---------------- */
 async function handleChat(req, res, user, body) {
   const text = String(body.message || "").trim().slice(0, 8000);
-  const modelLabel = String(body.model || "Technova 1.0 Flash");
+  const modelLabel = String(body.model || "Infinity 1.0 Flash");
   const deepThink = Boolean(body.deepThink);
   const tools = body.agent === undefined ? true : Boolean(body.agent);
   const wantsSearch = Boolean(body.search);
@@ -296,7 +296,7 @@ async function route(req, res) {
         ok: true,
         provider: hasKey() ? "nvidia" : "local",
         search: searchProvider(),
-        models: ["Technova 1.0 Flash", "Technova 1.5 Pro"].map((label) => ({ label, upstream: upstreamModel(label) })),
+        models: ["Infinity 1.0 Flash", "Infinity 1.5 Pro"].map((label) => ({ label, upstream: upstreamModel(label) })),
         uptime: Math.round(process.uptime()),
       });
     }
@@ -593,7 +593,7 @@ export function start(port = PORT) {
   return new Promise((resolve) => {
     server.listen(port, () => {
       const actual = server.address().port;
-      console.log(`Technova AI listening on http://localhost:${actual}  (${hasKey() ? "live model" : "local skills"} mode)`);
+      console.log(`Infinity AI listening on http://localhost:${actual}  (${hasKey() ? "live model" : "local skills"} mode)`);
       console.log("[auth] sign-in is OFF — anyone who can reach this port can use the app and change settings.");
       resolve(actual);
     });

@@ -1,6 +1,6 @@
 {
-  "name": "Technova AI",
-  "short_name": "Technova",
+  "name": "Infinity AI",
+  "short_name": "Infinity",
   "description": "A full-stack AI chat with web search, a browser tool and agent mode.",
   "start_url": "/",
   "display": "standalone",
